@@ -6,7 +6,9 @@ from pathlib import Path
 import cv2 as cv
 import feret
 import numpy as np
+import skimage.measure
 from matplotlib import pyplot as plt
+from scipy.stats import lognorm
 
 
 def plot_decorator(func):
@@ -183,59 +185,56 @@ class GrainProcessor:
 
         return img_no_contrast
 
-    def collect_stat(self):
-        areas = []
-        feret_data = []
-        markers = self._markers()
-        for i in range(2, np.max(markers)):
-            try:
-                if np.average((markers == i)) == 0.0:
-                    # print(f"no data {i}")
-                    continue
-                feret_data.append(feret.all(markers == i))
-                areas.append(np.sum(markers == i))
-            except IndexError:
-                pass
-                # print(i)
-        feret_data_np = np.array(feret_data)
-        pixel_sizes = np.sqrt(feret_data_np[:, 0] ** 2 + feret_data_np[:, 1] ** 2)
-        all_areas = np.array(areas)
-        nm_size = pixel_sizes * 2000 / 813  ## nm / pixels !!!!!!!!!!!!!!!!!!!!!
-        return all_areas, nm_size
-
     @cached_property
-    def merge_data_and_sort(self):
-        all_areas, nm_size = self.collect_stat()
+    def clusters(self):
+        return skimage.measure.regionprops(self._markers())
 
-        merged_data = np.ones((all_areas.shape[0], 2))
-        merged_data[:, 1] = all_areas
-        merged_data[:, 0] = nm_size
-        sorted_by_radius = merged_data[merged_data[:, 0].argsort()]
-        return sorted_by_radius
+    def get_diameters(self, plot=False, fit=True):
+        diameters = np.array([cluster.feret_diameter_max for cluster in self.clusters])[
+            1:
+        ]
 
-    @cached_property
-    def split_data_into_bins(self) -> list[np.array]:
-        data = self.merge_data_and_sort
-        delta_r = 2
+        if plot:
+            bins = np.linspace(0, np.quantile(diameters.max(), 0.95) * 1.1, 50)
+            plt.hist(diameters, bins=bins, density=False, color="teal", alpha=0.6)
+            plt.xlabel("Grain diameter, px")
+            plt.ylabel("Count")
 
-        bins_n = int(np.ceil(np.max(data[:, 0]) / delta_r))
-        answer = []
-        for i in range(bins_n):
-            answer.append(
-                data[(data[:, 0] > i * delta_r) * (data[:, 0] < (i + 1) * delta_r)]
-            )
-        return answer
+            if fit:
+                shape, loc, scale = lognorm.fit(diameters, floc=0)
+                x = np.linspace(diameters.min(), diameters.max(), 100)
+                pdf = lognorm.pdf(x, shape, loc, scale)
 
-    @cached_property
-    def get_plot_data(self, delta_r=2):
-        data = self.merge_data_and_sort
-        splited_data = self.split_data_into_bins
-        total_area = np.sum(data[:, 1])
-        x = [delta_r * (i + 1) for i in range(len(splited_data))]
-        y = [np.sum(chunk[:, 1]) / total_area for chunk in splited_data]
-        data = np.array([[i, j] for i, j in zip(x, y)])
-        return data
+                # Scale the PDF to match the histogram counts
+                bin_width = bins[1] - bins[0]
+                pdf_scaled = pdf * len(diameters) * bin_width
 
+                plt.plot(x, pdf_scaled, "r-", lw=2, color="lightcoral")
+            plt.show()
 
-# GP = GrainProcessor(r"C:\Users\Sergey\OneDrive\hzo grains\326\03.tif", fft_filter=True)
-# GP.get_plot_data()
+        return diameters
+
+    def get_areas(self, plot=False, fit=True):
+        areas = np.array([cluster.area for cluster in self.clusters])[1:]
+        area_quantile = np.quantile(areas, 0.9) * 1.1
+
+        if plot:
+            bins = np.linspace(0, area_quantile, 50)
+            plt.hist(areas, bins=bins, density=False, color="teal", alpha=0.6)
+            plt.xlabel("Grain area, px")
+            plt.ylabel("Count")
+
+            if fit:
+                shape, loc, scale = lognorm.fit(areas, floc=0)
+                x = np.linspace(areas.min(), area_quantile, 100)
+                pdf = lognorm.pdf(x, shape, loc, scale)
+
+                # Scale the PDF to match the histogram counts
+                # bin_width = bins[1] - bins[0]
+                # pdf_scaled = pdf * len(areas) * bin_width
+
+                plt.plot(x, pdf, "r-", lw=2)
+                plt.xlim(0, area_quantile)
+            plt.show()
+
+        return areas

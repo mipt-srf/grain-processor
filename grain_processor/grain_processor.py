@@ -4,7 +4,6 @@ from functools import cached_property, wraps
 from pathlib import Path
 
 import cv2 as cv
-import feret
 import numpy as np
 import skimage.measure
 from matplotlib import pyplot as plt

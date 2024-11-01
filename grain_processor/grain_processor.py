@@ -50,6 +50,9 @@ class GrainProcessor:
         if self.fft_filter:
             image = self._fft_filter(image)
 
+        if not grayscale:
+            image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+
         return image
 
     def _fft_filter(self, image, radius=100):
@@ -76,7 +79,19 @@ class GrainProcessor:
         img_back = np.fft.ifft2(f_ishift)
         img_back = np.abs(img_back)
 
-        return img_back
+        return img_back.astype(np.uint8)
+
+    def _adjust_fft_mask(self):
+        import ipywidgets
+
+        def update_image(radius):
+            self.image = self._fft_filter(self.image_grayscale, radius)
+            plt.imshow(self.image, cmap="gray")
+            plt.title(f"FFT Filtered Image with Radius {radius}")
+            plt.axis("off")
+            plt.show()
+
+        ipywidgets.interact(update_image, radius=(0, 250, 1))
 
     @plot_decorator
     def _threshold(self, blockSize=151):
@@ -134,6 +149,8 @@ class GrainProcessor:
         blob_number, markers = cv.connectedComponents(self._foreground())
         markers = markers + 1
         markers[self._unknown_region() == 255] = 0
+        if len(self.image.shape) == 2:
+            self.image = cv.cvtColor(self.image, cv.COLOR_GRAY2RGB)
         markers = cv.watershed(self.image, markers)
 
         return markers

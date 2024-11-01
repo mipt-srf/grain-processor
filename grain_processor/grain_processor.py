@@ -1,3 +1,5 @@
+"""Based on the tutorial https://docs.opencv.org/4.x/d3/db4/tutorial_py_watershed.html"""
+
 from functools import cached_property, wraps
 from pathlib import Path
 

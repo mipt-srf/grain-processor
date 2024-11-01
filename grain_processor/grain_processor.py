@@ -19,7 +19,7 @@ def plot_decorator(func):
         if plot:
             plt.figure()
             plt.imshow(result, cmap="gray")
-            plt.title(func.__name__[len("_") :].replace("_", " ").capitalize())
+            plt.title(func.__name__.replace("_", " ").lstrip().capitalize())
             plt.axis("off")
             plt.show()
 
@@ -31,35 +31,48 @@ def plot_decorator(func):
 class GrainProcessor:
     def __init__(self, image_path: Path | str, cut_SEM=False, fft_filter=False):
         self.image_path = image_path
+        self.__image_source = self.__read_image(self.image_path)
+        self.__image_grayscale_source = self._convert_to_grayscale(self.__image_source)
+
         self.cut_SEM = cut_SEM
         self.fft_filter = fft_filter
 
-        self.image = self._image()
-        self.image_grayscale = self._image(grayscale=True)
+        if cut_SEM:
+            self.__cut_image()
 
-    @plot_decorator
-    def _image(self, grayscale=False):
-        if grayscale:
-            image = cv.imread(self.image_path, cv.IMREAD_GRAYSCALE)
-        else:
-            image = cv.imread(self.image_path)
-
-        if self.cut_SEM:
-            image = image[:-128]
+        self._image = self.__image_source
+        self._image_grayscale = self.__image_grayscale_source
 
         if self.fft_filter:
-            image = self._fft_filter(image)
+            self._image_grayscale = self.__filter_image(self.__image_grayscale_source)
+            self.__update_RGB_image()
 
-        if not grayscale:
-            image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+    @plot_decorator
+    def image(self):
+        self.__update_RGB_image()
+        return self._image
 
-        return image
+    @plot_decorator
+    def image_grayscale(self):
+        return self._image_grayscale
 
-    def _fft_filter(self, image, radius=100):
-        # Convert image to grayscale if it is not already
-        if len(image.shape) == 3:
-            image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    def __read_image(self, path: Path | str):
+        return cv.imread(self.image_path)
 
+    def _convert_to_grayscale(self, image):
+        return cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+
+    def __convert_to_RGB(self, image):
+        return cv.cvtColor(image, cv.COLOR_GRAY2RGB)
+
+    def __update_RGB_image(self):
+        self._image = self.__convert_to_RGB(self._image_grayscale)
+
+    def __cut_image(self):
+        self.__image_source = self.__image_source[:-128]
+        self.__image_grayscale_source = self.__image_grayscale_source[:-128]
+
+    def __filter_image(self, image, radius=100):
         # Apply FFT
         f = np.fft.fft2(image)
         fshift = np.fft.fftshift(f)
@@ -81,12 +94,14 @@ class GrainProcessor:
 
         return img_back.astype(np.uint8)
 
-    def _adjust_fft_mask(self):
+    def adjust_fft_mask(self):
         import ipywidgets
 
         def update_image(radius):
-            self.image = self._fft_filter(self.image_grayscale, radius)
-            plt.imshow(self.image, cmap="gray")
+            self._image_grayscale = self.__filter_image(
+                self.__image_grayscale_source, radius
+            )
+            plt.imshow(self._image_grayscale, cmap="gray")
             plt.title(f"FFT Filtered Image with Radius {radius}")
             plt.axis("off")
             plt.show()
@@ -96,7 +111,7 @@ class GrainProcessor:
     @plot_decorator
     def _threshold(self, blockSize=151):
         # blur to remove gaussian noise
-        gray = cv.GaussianBlur(self.image_grayscale, (5, 5), cv.BORDER_DEFAULT)
+        gray = cv.GaussianBlur(self._image_grayscale, (5, 5), cv.BORDER_DEFAULT)
 
         # use adaptive thresholding to consider possible variations in brightness across the image
         thresh = cv.adaptiveThreshold(
@@ -149,9 +164,9 @@ class GrainProcessor:
         blob_number, markers = cv.connectedComponents(self._foreground())
         markers = markers + 1
         markers[self._unknown_region() == 255] = 0
-        if len(self.image.shape) == 2:
-            self.image = cv.cvtColor(self.image, cv.COLOR_GRAY2RGB)
-        markers = cv.watershed(self.image, markers)
+        if len(self._image.shape) == 2:
+            self._image = cv.cvtColor(self._image, cv.COLOR_GRAY2RGB)
+        markers = cv.watershed(self._image, markers)
 
         return markers
 
@@ -159,7 +174,7 @@ class GrainProcessor:
     def _image_non_contrast(self):
         markers = self._markers()
         kernel = np.ones((3, 3), np.uint8)
-        img_no_contrast = self.image
+        img_no_contrast = self._image.copy()
 
         mask = (markers == -1).astype(np.uint8)
         dilated_mask = cv.dilate(mask, kernel, iterations=2)

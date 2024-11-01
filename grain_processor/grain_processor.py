@@ -5,7 +5,6 @@ from pathlib import Path
 
 import cv2 as cv
 import feret
-import lmfit
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -32,7 +31,6 @@ def plot_decorator(func):
 class GrainProcessor:
     def __init__(self, image_path: Path | str, cut_SEM=False, fft_filter=False):
         self.image_path = image_path
-
         self.cut_SEM = cut_SEM
         self.fft_filter = fft_filter
 
@@ -128,20 +126,20 @@ class GrainProcessor:
         return sure_fg.astype(np.uint8)
 
     @plot_decorator
-    def unknown_region(self):
+    def _unknown_region(self):
         return cv.subtract(self._background(), self._foreground())
 
     @plot_decorator
     def _markers(self):
-        ret, markers = cv.connectedComponents(self._foreground())
+        blob_number, markers = cv.connectedComponents(self._foreground())
         markers = markers + 1
-        markers[self.unknown_region() == 255] = 0
+        markers[self._unknown_region() == 255] = 0
         markers = cv.watershed(self.image, markers)
 
         return markers
 
     @plot_decorator
-    def get_non_contrast_image(self):
+    def _image_non_contrast(self):
         markers = self._markers()
         kernel = np.ones((3, 3), np.uint8)
         img_no_contrast = self.image

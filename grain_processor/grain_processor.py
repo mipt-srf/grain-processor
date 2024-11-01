@@ -30,10 +30,11 @@ def plot_decorator(func):
 
 
 class GrainProcessor:
-    def __init__(self, image_path: Path | str, cut_SEM=False):
+    def __init__(self, image_path: Path | str, cut_SEM=False, fft_filter=False):
         self.image_path = image_path
 
         self.cut_SEM = cut_SEM
+        self.fft_filter = fft_filter
 
         self.image = self._image()
         self.image_grayscale = self._image(grayscale=True)
@@ -48,7 +49,36 @@ class GrainProcessor:
         if self.cut_SEM:
             image = image[:-128]
 
+        if self.fft_filter:
+            image = self._fft_filter(image)
+
         return image
+
+    def _fft_filter(self, image, radius=100):
+        # Convert image to grayscale if it is not already
+        if len(image.shape) == 3:
+            image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+
+        # Apply FFT
+        f = np.fft.fft2(image)
+        fshift = np.fft.fftshift(f)
+
+        # Create a mask with a high-pass filter
+        rows, cols = image.shape
+        crow, ccol = rows // 2, cols // 2
+        mask = np.zeros((rows, cols), np.uint8)
+        center = [crow, ccol]
+        x, y = np.ogrid[:rows, :cols]
+        mask_area = (x - center[0]) ** 2 + (y - center[1]) ** 2 <= radius * radius
+        mask[mask_area] = 1
+
+        # Apply mask and inverse FFT
+        fshift = fshift * mask
+        f_ishift = np.fft.ifftshift(fshift)
+        img_back = np.fft.ifft2(f_ishift)
+        img_back = np.abs(img_back)
+
+        return img_back
 
     @plot_decorator
     def _threshold(self, blockSize=151):
@@ -177,5 +207,5 @@ class GrainProcessor:
         return data
 
 
-# GP = GrainProcessor(r"C:\Users\Sergey\OneDrive\hzo grains\326\03.tif")
+# GP = GrainProcessor(r"C:\Users\Sergey\OneDrive\hzo grains\326\03.tif", fft_filter=True)
 # GP.get_plot_data()

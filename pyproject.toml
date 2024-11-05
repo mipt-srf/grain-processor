@@ -1,0 +1,32 @@
+[project]
+name = "grain-processor"
+version = "0.1.0"
+description = "Package for processing SEM images of films"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ipywidgets>=8.1.5",
+    "matplotlib>=3.9.2",
+    "opencv-python>=4.10.0.84",
+    "scikit-image>=0.24.0",
+]
+
+[project.scripts]
+grain-processor = "grain_processor:main"
+
+[project.optional-dependencies]
+plot = [
+    "ipympl>=0.9.4",
+    "pyqt6>=6.7.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "ipykernel>=6.29.5",
+    "pytest>=8.3.3",
+    "ruff>=0.7.0",
+]

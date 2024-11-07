@@ -188,54 +188,36 @@ class GrainProcessor:
     def clusters(self):
         return skimage.measure.regionprops(self._markers())
 
-    def get_diameters(self, plot=False, fit=True):
-        diameters = np.array([cluster.feret_diameter_max for cluster in self.clusters])[
-            1:
-        ]
+    def get_diameters(self):
+        return np.array([cluster.feret_diameter_max for cluster in self.clusters])[1:]
 
-        if plot:
-            max_diameter = np.quantile(diameters, 0.9) * 1.1
-            bins = np.linspace(0, max_diameter, 50)
-            plt.hist(diameters, bins=bins, density=False, color="teal", alpha=0.6)
-            plt.xlabel("Grain diameter, px")
-            plt.ylabel("Count")
+    def get_areas(self):
+        return np.array([cluster.area for cluster in self.clusters])[1:]
 
-            if fit:
-                shape, loc, scale = lognorm.fit(diameters, floc=0)
-                x = np.linspace(diameters.min(), max_diameter, 100)
-                pdf = lognorm.pdf(x, shape, loc, scale)
+    def __plot_distribution(self, data, xlabel, ylabel, fit=True):
+        max_data = np.quantile(data, 0.95) * 1.3
+        bins = np.linspace(0, max_data, 50)
+        plt.hist(data, bins=bins, color="teal", alpha=0.6)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
 
-                # Scale the PDF to match the histogram counts
-                bin_width = bins[1] - bins[0]
-                pdf_scaled = pdf * len(diameters) * bin_width
+        if fit:
+            shape, loc, scale = lognorm.fit(data, floc=0)
+            x = np.linspace(data.min(), max_data, 100)
+            pdf = lognorm.pdf(x, shape, loc, scale)
 
-                plt.plot(x, pdf_scaled, "r-", lw=2, color="lightcoral")
-                plt.xlim(0, max_diameter)
-            plt.show()
+            # Scale the PDF to match the histogram counts
+            bin_width = bins[1] - bins[0]
+            pdf_scaled = pdf * len(data) * bin_width
 
-        return diameters
+            plt.plot(x, pdf_scaled, "r-", lw=2, color="lightcoral")
+            plt.xlim(0, max_data)
+        plt.show()
 
-    def get_areas(self, plot=False, fit=True):
-        areas = np.array([cluster.area for cluster in self.clusters])[1:]
+    def plot_diameters(self, fit=True):
+        diameters = self.get_diameters()
+        self.__plot_distribution(diameters, "Grain diameter, px", "Count", fit)
 
-        if plot:
-            area_quantile = np.quantile(areas, 0.9) * 1.1
-            bins = np.linspace(0, area_quantile, 50)
-            plt.hist(areas, bins=bins, density=False, color="teal", alpha=0.6)
-            plt.xlabel("Grain area, px")
-            plt.ylabel("Count")
-
-            if fit:
-                shape, loc, scale = lognorm.fit(areas, floc=0)
-                x = np.linspace(areas.min(), area_quantile, 100)
-                pdf = lognorm.pdf(x, shape, loc, scale)
-
-                # Scale the PDF to match the histogram counts
-                # bin_width = bins[1] - bins[0]
-                # pdf_scaled = pdf * len(areas) * bin_width
-
-                plt.plot(x, pdf, "r-", lw=2)
-                plt.xlim(0, area_quantile)
-            plt.show()
-
-        return areas
+    def plot_areas(self, fit=False):
+        areas = self.get_areas()
+        self.__plot_distribution(areas, "Grain area, px^2", "Count", fit)

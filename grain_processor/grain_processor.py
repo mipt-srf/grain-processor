@@ -194,6 +194,13 @@ class GrainProcessor:
     def get_areas(self):
         return np.array([cluster.area for cluster in self.clusters])[1:]
 
+    def __lognorm_fit(self, data):
+        shape, loc, scale = lognorm.fit(data, floc=0)
+        x = np.linspace(data.min(), data.max(), 100)
+        pdf = lognorm.pdf(x, shape, loc, scale)
+
+        return x, pdf
+
     def __plot_distribution(self, data, xlabel, ylabel, fit=True):
         max_data = np.quantile(data, 0.95) * 1.3
         bins = np.linspace(0, max_data, 50)
@@ -202,11 +209,8 @@ class GrainProcessor:
         plt.ylabel(ylabel)
 
         if fit:
-            shape, loc, scale = lognorm.fit(data, floc=0)
-            x = np.linspace(data.min(), max_data, 100)
-            pdf = lognorm.pdf(x, shape, loc, scale)
+            x, pdf = self.__lognorm_fit(data)
 
-            # Scale the PDF to match the histogram counts
             bin_width = bins[1] - bins[0]
             pdf_scaled = pdf * len(data) * bin_width
 

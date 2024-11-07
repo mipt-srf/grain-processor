@@ -225,3 +225,20 @@ class GrainProcessor:
     def plot_areas(self, fit=False):
         areas = self.get_areas()
         self.__plot_distribution(areas, "Grain area, px^2", "Count", fit)
+
+    def save_results(self, path: Path | str = "results"):
+        path = Path(path)
+        path.mkdir(exist_ok=True)
+
+        cv.imwrite(path / "image.png", self._image_grayscale)
+        cv.imwrite(path / "image_with_markers.png", self._image_non_contrast())
+
+        with open(path / "diameters.txt", "w") as f:
+            f.write("\n".join(map(str, self.get_diameters())))
+
+        with open(path / "areas.txt", "w") as f:
+            f.write("\n".join(map(str, self.get_areas())))
+
+        with open(path / "diameters_fit.txt", "w") as f:
+            x, pdf = self.__lognorm_fit(self.get_diameters())
+            f.write("\n".join(f"{x[i]}, {pdf[i]}" for i in range(len(x))))

@@ -218,13 +218,19 @@ class GrainProcessor:
             plt.xlim(0, max_data)
         plt.show()
 
-    def plot_diameters(self, fit=True):
+    def plot_diameters(self, fit=True, return_fig=False):
+        fig = plt.figure()
         diameters = self.get_diameters()
         self.__plot_distribution(diameters, "Grain diameter, px", "Count", fit)
+        if return_fig:
+            return fig
 
-    def plot_areas(self, fit=False):
+    def plot_areas(self, fit=False, return_fig=False):
+        fig = plt.figure()
         areas = self.get_areas()
         self.__plot_distribution(areas, "Grain area, px^2", "Count", fit)
+        if return_fig:
+            return fig
 
     def save_results(self, path: Path | str = "results"):
         path = Path(path)
@@ -233,9 +239,11 @@ class GrainProcessor:
         cv.imwrite(path / "image.png", self._image_grayscale)
         cv.imwrite(path / "image_with_markers.png", self._image_non_contrast())
 
+        self.plot_diameters(return_fig=True).savefig(path / "diameters.png", dpi=300)
         with open(path / "diameters.txt", "w") as f:
             f.write("\n".join(map(str, self.get_diameters())))
 
+        self.plot_areas(return_fig=True).savefig(path / "areas.png", dpi=300)
         with open(path / "areas.txt", "w") as f:
             f.write("\n".join(map(str, self.get_areas())))
 

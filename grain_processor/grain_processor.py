@@ -37,21 +37,18 @@ class GrainProcessor:
         self.__image_source = self.__read_image(self.image_path)
         self.__image_grayscale_source = self._convert_to_grayscale(self.__image_source)
 
-        self.cut_SEM = cut_SEM
-        self.fft_filter = fft_filter
-
         if cut_SEM:
             self.__cut_image()
-
-        if scale:
-            self.__get_scale(self.image_path.with_suffix(".txt"))
 
         self._image = self.__image_source
         self._image_grayscale = self.__image_grayscale_source
 
-        if self.fft_filter:
+        if fft_filter:
             self._image_grayscale = self.__filter_image(self.__image_grayscale_source)
             self.__update_RGB_image()
+
+        if scale:
+            self.__get_scale(self.image_path.with_suffix(".txt"))
 
     def __get_scale(self, txt_path: Path | str):
         try:
@@ -232,7 +229,7 @@ class GrainProcessor:
         return x, pdf
 
     def __plot_distribution(self, data, xlabel, probability=True, fit=True):
-        max_data = np.quantile(data, 0.95) * 1.3
+        max_data = np.quantile(data, 0.99)
         bins = np.linspace(0, max_data, 50)
         plt.hist(data, bins=bins, color="teal", alpha=0.6)
         plt.xlabel(xlabel)
@@ -244,7 +241,7 @@ class GrainProcessor:
             bin_width = bins[1] - bins[0]
             pdf_scaled = pdf * len(data) * bin_width
 
-            plt.plot(x, pdf_scaled, "r-", lw=2, color="lightcoral")
+            plt.plot(x, pdf_scaled, "r-", linewidth=2, color="lightcoral")
         if probability:
             plt.gca().yaxis.set_major_formatter(
                 plt.FuncFormatter(lambda y, _: "{:.0f}".format(y / len(data) * 100))
@@ -264,7 +261,9 @@ class GrainProcessor:
         else:
             label += "px"
 
-        self.__plot_distribution(diameters, label, probability, fit)
+        self.__plot_distribution(
+            data=diameters, xlabel=label, probability=probability, fit=fit
+        )
         if return_fig:
             return fig
 
@@ -279,7 +278,9 @@ class GrainProcessor:
         else:
             label += "px$^2$"
 
-        self.__plot_distribution(areas, label, probability, fit)
+        self.__plot_distribution(
+            data=areas, xlabel=label, probability=probability, fit=fit
+        )
         if return_fig:
             return fig
 

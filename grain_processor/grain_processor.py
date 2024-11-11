@@ -83,7 +83,10 @@ class GrainProcessor:
         return self._image_grayscale
 
     def __read_image(self, path: Path | str):
-        return cv.imread(self.image_path)
+        image = cv.imread(str(path))
+        if image is None:
+            raise FileNotFoundError(f"Image not found: {path}")
+        return image
 
     def _convert_to_grayscale(self, image):
         return cv.cvtColor(image, cv.COLOR_BGR2GRAY)

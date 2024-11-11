@@ -30,7 +30,9 @@ def plot_decorator(func):
 
 
 class GrainProcessor:
-    def __init__(self, image_path: Path | str, cut_SEM=False, fft_filter=False):
+    def __init__(
+        self, image_path: Path | str, cut_SEM=False, fft_filter=False, scale=True
+    ):
         self.image_path = Path(image_path)
         self.__image_source = self.__read_image(self.image_path)
         self.__image_grayscale_source = self._convert_to_grayscale(self.__image_source)
@@ -248,14 +250,30 @@ class GrainProcessor:
     def plot_diameters(self, fit=True, return_fig=False):
         fig = plt.figure()
         diameters = self.get_diameters()
-        self.__plot_distribution(diameters, "Grain diameter, px", "Count", fit)
+
+        label = "Grain diameter, "
+        if self.pixels_per_bar is not None:
+            diameters *= self.nanometers_per_bar / self.pixels_per_bar
+            label += "nm"
+        else:
+            label += "px"
+
+        self.__plot_distribution(diameters, label, "Count", fit)
         if return_fig:
             return fig
 
     def plot_areas(self, fit=False, return_fig=False):
         fig = plt.figure()
         areas = self.get_areas()
-        self.__plot_distribution(areas, "Grain area, px^2", "Count", fit)
+
+        label = r"Grain area, "
+        if self.pixels_per_bar is not None:
+            areas *= (self.nanometers_per_bar / self.pixels_per_bar) ** 2
+            label += "nm$^2$"
+        else:
+            label += "px$^2$"
+
+        self.__plot_distribution(areas, label, "Count", fit)
         if return_fig:
             return fig
 

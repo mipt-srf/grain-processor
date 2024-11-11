@@ -31,7 +31,7 @@ def plot_decorator(func):
 
 class GrainProcessor:
     def __init__(self, image_path: Path | str, cut_SEM=False, fft_filter=False):
-        self.image_path = image_path
+        self.image_path = Path(image_path)
         self.__image_source = self.__read_image(self.image_path)
         self.__image_grayscale_source = self._convert_to_grayscale(self.__image_source)
 
@@ -41,12 +41,37 @@ class GrainProcessor:
         if cut_SEM:
             self.__cut_image()
 
+        if scale:
+            self.__get_scale(self.image_path.with_suffix(".txt"))
+
         self._image = self.__image_source
         self._image_grayscale = self.__image_grayscale_source
 
         if self.fft_filter:
             self._image_grayscale = self.__filter_image(self.__image_grayscale_source)
             self.__update_RGB_image()
+
+    def __get_scale(self, txt_path: Path | str):
+        try:
+            with open(txt_path, "r") as file:
+                for line in file:
+                    if line.startswith("$$SM_MICRON_BAR"):
+                        self.pixels_per_bar = int(line.split()[1])
+                    elif line.startswith("$$SM_MICRON_MARKER"):
+                        size_per_bar = line.split()[1]
+        except FileNotFoundError as e:
+            print(f"Error reading scale information: {e}")
+            self.pixels_per_bar = None
+            self.nanometers_per_bar = None
+        else:
+            unit = size_per_bar[-2:]
+            size = float(size_per_bar[:-2])
+            if unit == "nm":
+                self.nanometers_per_bar = size
+            elif unit == "um":
+                self.nanometers_per_bar = size * 1e3  # convert to nanometers
+            else:
+                raise ValueError(f"Unknown unit in size_per_bar: {unit}")
 
     @plot_decorator
     def image(self):

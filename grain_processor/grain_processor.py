@@ -231,12 +231,12 @@ class GrainProcessor:
 
         return x, pdf
 
-    def __plot_distribution(self, data, xlabel, ylabel, fit=True):
+    def __plot_distribution(self, data, xlabel, probability=True, fit=True):
         max_data = np.quantile(data, 0.95) * 1.3
         bins = np.linspace(0, max_data, 50)
         plt.hist(data, bins=bins, color="teal", alpha=0.6)
         plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
+        plt.ylabel("Count")
 
         if fit:
             x, pdf = self.__lognorm_fit(data)
@@ -245,9 +245,15 @@ class GrainProcessor:
             pdf_scaled = pdf * len(data) * bin_width
 
             plt.plot(x, pdf_scaled, "r-", lw=2, color="lightcoral")
+        if probability:
+            plt.gca().yaxis.set_major_formatter(
+                plt.FuncFormatter(lambda y, _: "{:.0f}".format(y / len(data) * 100))
+            )  # sum of all bins is 100%
+            plt.ylabel("Probability, %")
+
         plt.show()
 
-    def plot_diameters(self, fit=True, return_fig=False):
+    def plot_diameters(self, fit=True, probability=True, return_fig=False):
         fig = plt.figure()
         diameters = self.get_diameters()
 
@@ -258,11 +264,11 @@ class GrainProcessor:
         else:
             label += "px"
 
-        self.__plot_distribution(diameters, label, "Count", fit)
+        self.__plot_distribution(diameters, label, probability, fit)
         if return_fig:
             return fig
 
-    def plot_areas(self, fit=False, return_fig=False):
+    def plot_areas(self, fit=False, probability=True, return_fig=False):
         fig = plt.figure()
         areas = self.get_areas()
 
@@ -273,7 +279,7 @@ class GrainProcessor:
         else:
             label += "px$^2$"
 
-        self.__plot_distribution(areas, label, "Count", fit)
+        self.__plot_distribution(areas, label, probability, fit)
         if return_fig:
             return fig
 

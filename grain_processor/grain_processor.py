@@ -224,7 +224,7 @@ class GrainProcessor:
 
     def __lognorm_fit(self, data):
         shape, loc, scale = lognorm.fit(data, floc=0)
-        x = np.linspace(data.min(), data.max(), 100)
+        x = np.linspace(0, np.quantile(data, 0.99), 100)
         pdf = lognorm.pdf(x, shape, loc, scale)
 
         return x, pdf
@@ -243,7 +243,6 @@ class GrainProcessor:
             pdf_scaled = pdf * len(data) * bin_width
 
             plt.plot(x, pdf_scaled, "r-", lw=2, color="lightcoral")
-            plt.xlim(0, max_data)
         plt.show()
 
     def plot_diameters(self, fit=True, return_fig=False):

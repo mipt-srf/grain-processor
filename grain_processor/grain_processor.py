@@ -52,8 +52,8 @@ class GrainProcessor:
 
     def _get_scale(self, txt_path: Path | str):
         try:
-            with open(txt_path, "r") as file:
-                for line in file:
+            with open(txt_path, "r", errors="ignore") as txt_file:
+                for line in txt_file:
                     if line.startswith("$$SM_MICRON_BAR"):
                         self.pixels_per_bar = int(line.split()[1])
                     elif line.startswith("$$SM_MICRON_MARKER"):

@@ -44,7 +44,7 @@ class GrainProcessor:
         self._image_grayscale = self._image_grayscale_source
 
         if fft_filter:
-            self._image_grayscale = self._filter_image(self._image_grayscale)
+            self._filter_image()
             self._update_RGB_image()
 
         if scale:
@@ -100,7 +100,9 @@ class GrainProcessor:
         self._image_source = self._image_source[:-128]
         self._image_grayscale_source = self._image_grayscale_source[:-128]
 
-    def __filter_image(self, image, radius=100, plot=False):
+    def _filter_image(self, image=None, radius=100, plot=False):
+        if image is None:
+            image = self._image_grayscale_source.copy()
         # Apply FFT
         f = np.fft.fft2(image)
         fshift = np.fft.fftshift(f)
@@ -138,15 +140,13 @@ class GrainProcessor:
             plt.axis("off")
             plt.show()
 
-        return img_back.astype(np.uint8)
+        self._image_grayscale = img_back.astype(np.uint8)
 
     def adjust_fft_mask(self):
         import ipywidgets
 
         def update_image(radius):
-            self._image_grayscale = self._filter_image(
-                self._image_grayscale_source, radius, plot=True
-            )
+            self._image_grayscale = self._filter_image(radius, plot=True)
             plt.imshow(self._image_grayscale, cmap="gray")
             plt.title(f"FFT Filtered Image with radius {radius}")
             plt.axis("off")

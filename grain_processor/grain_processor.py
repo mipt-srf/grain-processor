@@ -225,7 +225,7 @@ class GrainProcessor:
         mask = (markers == -1).astype(np.uint8)
         dilated_mask = cv.dilate(mask, kernel, iterations=2)
 
-        img_no_contrast[dilated_mask == 1] = [0, 0, 255]
+        img_no_contrast[dilated_mask == 1] = [255, 0, 0]
 
         return img_no_contrast
 

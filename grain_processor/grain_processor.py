@@ -229,7 +229,7 @@ class GrainProcessor:
 
         return img_no_contrast
 
-    @cached_property
+    @property
     def clusters(self):
         return skimage.measure.regionprops(self._markers())
 

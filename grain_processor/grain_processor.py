@@ -364,6 +364,33 @@ class GrainProcessor:
         if return_fig:
             return fig
 
+    def plot_perimeters_vs_diameters(self, return_fig=False, fit=False):
+        fig = plt.figure()
+        diameters = self.get_diameters(in_nm=True)
+        perimeters = self.get_perimeters(in_nm=True)
+
+        plt.scatter(diameters, perimeters, color="teal", alpha=0.6)
+        plt.xlabel("Grain diameter, nm")
+        plt.ylabel("Grain perimeter, nm")
+
+        if fit:
+            coeffs = np.polyfit(diameters, perimeters, 1)
+            fit_line = np.poly1d(coeffs)
+            slope = coeffs[0]
+            plt.plot(
+                diameters,
+                fit_line(diameters),
+                color="red",
+                linestyle="--",
+                linewidth=2,
+                alpha=0.6,
+            )
+            plt.legend([f"Linear fit (slope={slope:.2f})", "Data"])
+
+        plt.show()
+        if return_fig:
+            return fig
+
     def save_results(self, path: Path | str = "results"):
         path = Path(path)
         path.mkdir(exist_ok=True)
@@ -397,3 +424,7 @@ class GrainProcessor:
                 f.write(f"{key}:\n")
                 for subkey, subvalue in value.items():
                     f.write(f"\t{subkey}: {subvalue}\n")
+
+        self.plot_perimeters_vs_diameters(return_fig=True, fit=True).savefig(
+            path / "perimeters_vs_diameters.png", dpi=300
+        )

@@ -233,11 +233,19 @@ class GrainProcessor:
     def clusters(self):
         return skimage.measure.regionprops(self._markers())
 
-    def get_diameters(self):
-        return np.array([cluster.feret_diameter_max for cluster in self.clusters])[1:]
+    def get_diameters(self, in_nm=True):
+        diameters = np.array([cluster.feret_diameter_max for cluster in self.clusters])[
+            1:
+        ]
+        if in_nm and self.pixels_per_bar is not None:
+            diameters *= self.nanometers_per_bar / self.pixels_per_bar
+        return diameters
 
-    def get_areas(self):
-        return np.array([cluster.area for cluster in self.clusters])[1:]
+    def get_areas(self, in_nm=True):
+        areas = np.array([cluster.area for cluster in self.clusters])[1:]
+        if in_nm and self.pixels_per_bar is not None:
+            areas *= (self.nanometers_per_bar / self.pixels_per_bar) ** 2
+        return areas
 
     def _lognorm_fit(self, data):
         shape, loc, scale = lognorm.fit(data, floc=0)
@@ -270,13 +278,13 @@ class GrainProcessor:
 
     def plot_diameters(self, fit=True, probability=True, return_fig=False):
         fig = plt.figure()
-        diameters = self.get_diameters()
+        diameters = self.get_diameters(in_nm=True)
 
         label = "Grain diameter, "
         if self.pixels_per_bar is not None:
-            diameters *= self.nanometers_per_bar / self.pixels_per_bar
             label += "nm"
         else:
+            diameters = self.get_diameters(in_nm=False)
             label += "px"
 
         self._plot_distribution(
@@ -291,9 +299,10 @@ class GrainProcessor:
 
         label = r"Grain area, "
         if self.pixels_per_bar is not None:
-            areas *= (self.nanometers_per_bar / self.pixels_per_bar) ** 2
+            areas = self.get_areas(in_nm=True)
             label += "nm$^2$"
         else:
+            areas = self.get_areas(in_nm=False)
             label += "px$^2$"
 
         self._plot_distribution(

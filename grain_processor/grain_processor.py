@@ -254,6 +254,7 @@ class GrainProcessor:
         return areas
 
     def _lognorm_fit(self, data):
+        data = data[data > 0]
         shape, loc, scale = lognorm.fit(data, floc=0)
         x = np.linspace(0, np.quantile(data, 0.99), 100)
         pdf = lognorm.pdf(x, shape, loc, scale)

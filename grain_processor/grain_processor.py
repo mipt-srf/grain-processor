@@ -34,23 +34,23 @@ class GrainProcessor:
         self, image_path: Path | str, cut_SEM=False, fft_filter=False, scale=True
     ):
         self.image_path = Path(image_path)
-        self.__image_source = self.__read_image(self.image_path)
-        self.__image_grayscale_source = self._convert_to_grayscale(self.__image_source)
+        self._image_source = self._read_image(self.image_path)
+        self._image_grayscale_source = self._convert_to_grayscale(self._image_source)
 
         if cut_SEM:
-            self.__cut_image()
+            self._cut_image()
 
-        self._image = self.__image_source
-        self._image_grayscale = self.__image_grayscale_source
+        self._image = self._image_source
+        self._image_grayscale = self._image_grayscale_source
 
         if fft_filter:
-            self._image_grayscale = self.__filter_image(self.__image_grayscale_source)
-            self.__update_RGB_image()
+            self._image_grayscale = self._filter_image(self._image_grayscale)
+            self._update_RGB_image()
 
         if scale:
-            self.__get_scale(self.image_path.with_suffix(".txt"))
+            self._get_scale(self.image_path.with_suffix(".txt"))
 
-    def __get_scale(self, txt_path: Path | str):
+    def _get_scale(self, txt_path: Path | str):
         try:
             with open(txt_path, "r") as file:
                 for line in file:
@@ -74,14 +74,14 @@ class GrainProcessor:
 
     @plot_decorator
     def image(self):
-        self.__update_RGB_image()
+        self._update_RGB_image()
         return self._image
 
     @plot_decorator
     def image_grayscale(self):
         return self._image_grayscale
 
-    def __read_image(self, path: Path | str):
+    def _read_image(self, path: Path | str):
         image = cv.imread(str(path))
         if image is None:
             raise FileNotFoundError(f"Image not found: {path}")
@@ -90,15 +90,15 @@ class GrainProcessor:
     def _convert_to_grayscale(self, image):
         return cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
-    def __convert_to_RGB(self, image):
+    def _convert_to_RGB(self, image):
         return cv.cvtColor(image, cv.COLOR_GRAY2RGB)
 
-    def __update_RGB_image(self):
-        self._image = self.__convert_to_RGB(self._image_grayscale)
+    def _update_RGB_image(self):
+        self._image = self._convert_to_RGB(self._image_grayscale)
 
-    def __cut_image(self):
-        self.__image_source = self.__image_source[:-128]
-        self.__image_grayscale_source = self.__image_grayscale_source[:-128]
+    def _cut_image(self):
+        self._image_source = self._image_source[:-128]
+        self._image_grayscale_source = self._image_grayscale_source[:-128]
 
     def __filter_image(self, image, radius=100, plot=False):
         # Apply FFT
@@ -126,7 +126,7 @@ class GrainProcessor:
                 magnitude_spectrum, None, 0, 255, cv.NORM_MINMAX
             )
             mask_circle_rgb = cv.circle(
-                self.__convert_to_RGB(magnitude_spectrum.astype(np.uint8)),
+                self._convert_to_RGB(magnitude_spectrum.astype(np.uint8)),
                 (ccol, crow),
                 radius,
                 (255, 0, 0),
@@ -144,8 +144,8 @@ class GrainProcessor:
         import ipywidgets
 
         def update_image(radius):
-            self._image_grayscale = self.__filter_image(
-                self.__image_grayscale_source, radius, plot=True
+            self._image_grayscale = self._filter_image(
+                self._image_grayscale_source, radius, plot=True
             )
             plt.imshow(self._image_grayscale, cmap="gray")
             plt.title(f"FFT Filtered Image with radius {radius}")
@@ -239,14 +239,14 @@ class GrainProcessor:
     def get_areas(self):
         return np.array([cluster.area for cluster in self.clusters])[1:]
 
-    def __lognorm_fit(self, data):
+    def _lognorm_fit(self, data):
         shape, loc, scale = lognorm.fit(data, floc=0)
         x = np.linspace(0, np.quantile(data, 0.99), 100)
         pdf = lognorm.pdf(x, shape, loc, scale)
 
         return x, pdf
 
-    def __plot_distribution(self, data, xlabel, probability=True, fit=True):
+    def _plot_distribution(self, data, xlabel, probability=True, fit=True):
         max_data = np.quantile(data, 0.99)
         bins = np.linspace(0, max_data, 50)
         plt.hist(data, bins=bins, color="teal", alpha=0.6)
@@ -254,7 +254,7 @@ class GrainProcessor:
         plt.ylabel("Count")
 
         if fit:
-            x, pdf = self.__lognorm_fit(data)
+            x, pdf = self._lognorm_fit(data)
 
             bin_width = bins[1] - bins[0]
             pdf_scaled = pdf * len(data) * bin_width
@@ -279,7 +279,7 @@ class GrainProcessor:
         else:
             label += "px"
 
-        self.__plot_distribution(
+        self._plot_distribution(
             data=diameters, xlabel=label, probability=probability, fit=fit
         )
         if return_fig:
@@ -296,7 +296,7 @@ class GrainProcessor:
         else:
             label += "px$^2$"
 
-        self.__plot_distribution(
+        self._plot_distribution(
             data=areas, xlabel=label, probability=probability, fit=fit
         )
         if return_fig:
@@ -318,5 +318,5 @@ class GrainProcessor:
             f.write("\n".join(map(str, self.get_areas())))
 
         with open(path / "diameters_fit.txt", "w") as f:
-            x, pdf = self.__lognorm_fit(self.get_diameters())
+            x, pdf = self._lognorm_fit(self.get_diameters())
             f.write("\n".join(f"{x[i]}, {pdf[i]}" for i in range(len(x))))

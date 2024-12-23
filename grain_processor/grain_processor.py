@@ -40,8 +40,8 @@ class GrainProcessor:
         if cut_SEM:
             self._cut_image()
 
-        self._image = self._image_source
-        self._image_grayscale = self._image_grayscale_source
+        self._image = self._image_source.copy()
+        self._image_grayscale = self._image_grayscale_source.copy()
 
         if fft_filter:
             self._filter_image()

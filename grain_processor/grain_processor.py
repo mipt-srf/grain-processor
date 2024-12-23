@@ -241,6 +241,12 @@ class GrainProcessor:
             diameters *= self.nanometers_per_bar / self.pixels_per_bar
         return diameters
 
+    def get_perimeters(self, in_nm=True):
+        perimeters = np.array([cluster.perimeter for cluster in self.clusters])[1:]
+        if in_nm and self.pixels_per_bar is not None:
+            perimeters *= self.nanometers_per_bar / self.pixels_per_bar
+        return perimeters
+
     def get_areas(self, in_nm=True):
         areas = np.array([cluster.area for cluster in self.clusters])[1:]
         if in_nm and self.pixels_per_bar is not None:
@@ -293,6 +299,23 @@ class GrainProcessor:
         if return_fig:
             return fig
 
+    def plot_perimeters(self, fit=True, probability=True, return_fig=False):
+        fig = plt.figure()
+        perimeters = self.get_perimeters(in_nm=True)
+
+        label = r"Grain perimeter, "
+        if self.pixels_per_bar is not None:
+            label += "nm"
+        else:
+            perimeters = self.get_perimeters(in_nm=False)
+            label += "px"
+
+        self._plot_distribution(
+            data=perimeters, xlabel=label, probability=probability, fit=fit
+        )
+        if return_fig:
+            return fig
+
     def plot_areas(self, fit=False, probability=True, return_fig=False):
         fig = plt.figure()
         areas = self.get_areas()
@@ -328,4 +351,11 @@ class GrainProcessor:
 
         with open(path / "diameters_fit.txt", "w") as f:
             x, pdf = self._lognorm_fit(self.get_diameters())
+            f.write("\n".join(f"{x[i]}, {pdf[i]}" for i in range(len(x))))
+
+        self.plot_perimeters(return_fig=True).savefig(path / "perimeters.png", dpi=300)
+        with open(path / "perimeters.txt", "w") as f:
+            f.write("\n".join(map(str, self.get_perimeters())))
+        with open(path / "perimeters_fit.txt", "w") as f:
+            x, pdf = self._lognorm_fit(self.get_perimeters())
             f.write("\n".join(f"{x[i]}, {pdf[i]}" for i in range(len(x))))

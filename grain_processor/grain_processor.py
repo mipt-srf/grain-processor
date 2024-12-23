@@ -253,6 +253,35 @@ class GrainProcessor:
             areas *= (self.nanometers_per_bar / self.pixels_per_bar) ** 2
         return areas
 
+    def get_stats(self, in_nm=True):
+        diameters = self.get_diameters(in_nm)
+        perimeters = self.get_perimeters(in_nm)
+        areas = self.get_areas(in_nm)
+
+        return {
+            "diameters": {
+                "mean": np.mean(diameters),
+                "std": np.std(diameters),
+                "min": np.min(diameters),
+                "max": np.max(diameters),
+                "sum": np.sum(diameters),
+            },
+            "perimeters": {
+                "mean": np.mean(perimeters),
+                "std": np.std(perimeters),
+                "min": np.min(perimeters),
+                "max": np.max(perimeters),
+                "sum": np.sum(perimeters),
+            },
+            "areas": {
+                "mean": np.mean(areas),
+                "std": np.std(areas),
+                "min": np.min(areas),
+                "max": np.max(areas),
+                "sum": np.sum(areas),
+            },
+        }
+
     def _lognorm_fit(self, data):
         data = data[data > 0]
         shape, loc, scale = lognorm.fit(data, floc=0)
@@ -357,6 +386,14 @@ class GrainProcessor:
         self.plot_perimeters(return_fig=True).savefig(path / "perimeters.png", dpi=300)
         with open(path / "perimeters.txt", "w") as f:
             f.write("\n".join(map(str, self.get_perimeters())))
+
         with open(path / "perimeters_fit.txt", "w") as f:
             x, pdf = self._lognorm_fit(self.get_perimeters())
             f.write("\n".join(f"{x[i]}, {pdf[i]}" for i in range(len(x))))
+
+        with open(path / "stats.txt", "w") as f:
+            stats = self.get_stats()
+            for key, value in stats.items():
+                f.write(f"{key}:\n")
+                for subkey, subvalue in value.items():
+                    f.write(f"\t{subkey}: {subvalue}\n")

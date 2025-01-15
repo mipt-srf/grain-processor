@@ -312,6 +312,70 @@ class GrainProcessor:
 
         plt.show()
 
+    def plot_area_fractions(self, bins=50, return_fig=False):
+        fig, ax = plt.subplots()
+        diameters = self.get_diameters(in_nm=True)
+        areas = self.get_areas(in_nm=True)
+
+        # Remove outliers
+        max_diameter = np.quantile(diameters, 0.99)
+        mask = diameters <= max_diameter
+        diameters = diameters[mask]
+        areas = areas[mask]
+
+        # Define bin edges
+        bin_edges = np.linspace(diameters.min(), diameters.max(), bins + 1)
+        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+
+        # Sum areas for each bin
+        area_sums, _ = np.histogram(diameters, bins=bin_edges, weights=areas)
+        percentage = (area_sums / area_sums.sum()) * 100
+
+        ax.bar(
+            bin_centers,
+            percentage,
+            width=bin_edges[1] - bin_edges[0],
+            color="teal",
+            alpha=0.6,
+        )
+        ax.set_xlabel("Grain diameter, nm")
+        ax.set_ylabel("Area fraction, %")
+
+        if return_fig:
+            return fig
+
+    def plot_area_fractions_vs_perimeter(self, bins=50, return_fig=False):
+        fig, ax = plt.subplots()
+        perimeters = self.get_perimeters(in_nm=True)
+        areas = self.get_areas(in_nm=True)
+
+        # Remove outliers
+        max_diameter = np.quantile(perimeters, 0.99)
+        mask = perimeters <= max_diameter
+        perimeters = perimeters[mask]
+        areas = areas[mask]
+
+        # Define bin edges
+        bin_edges = np.linspace(perimeters.min(), perimeters.max(), bins + 1)
+        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+
+        # Sum areas for each bin
+        area_sums, _ = np.histogram(perimeters, bins=bin_edges, weights=areas)
+        percentage = (area_sums / area_sums.sum()) * 100
+
+        ax.bar(
+            bin_centers,
+            percentage,
+            width=bin_edges[1] - bin_edges[0],
+            color="teal",
+            alpha=0.6,
+        )
+        ax.set_xlabel("Grain diameter, nm")
+        ax.set_ylabel("Area fraction, %")
+
+        if return_fig:
+            return fig
+
     def plot_diameters(self, fit=True, probability=True, return_fig=False):
         fig = plt.figure()
         diameters = self.get_diameters(in_nm=True)
@@ -427,4 +491,11 @@ class GrainProcessor:
 
         self.plot_perimeters_vs_diameters(return_fig=True, fit=True).savefig(
             path / "perimeters_vs_diameters.png", dpi=300
+        )
+
+        self.plot_area_fractions(return_fig=True).savefig(
+            path / "area_fractions.png", dpi=300
+        )
+        self.plot_area_fractions_vs_perimeter(return_fig=True).savefig(
+            path / "area_fractions_vs_perimeter.png", dpi=300
         )

@@ -1,6 +1,6 @@
 """Based on the tutorial https://docs.opencv.org/4.x/d3/db4/tutorial_py_watershed.html"""
 
-from functools import cached_property, wraps
+from functools import wraps
 from pathlib import Path
 
 import cv2 as cv
@@ -31,8 +31,12 @@ def plot_decorator(func):
 
 class GrainProcessor:
     def __init__(
-        self, image_path: Path | str, cut_SEM=False, fft_filter=False, scale=True
-    ):
+        self,
+        image_path: Path | str,
+        cut_SEM: bool = False,
+        fft_filter: bool = False,
+        scale: bool = True,
+    ) -> None:
         self.image_path = Path(image_path)
         self._image_source = self._read_image(self.image_path)
         self._image_grayscale_source = self._convert_to_grayscale(self._image_source)
@@ -50,7 +54,7 @@ class GrainProcessor:
         if scale:
             self._get_scale(self.image_path.with_suffix(".txt"))
 
-    def _get_scale(self, txt_path: Path | str):
+    def _get_scale(self, txt_path: Path | str) -> None:
         try:
             with open(txt_path, "r", errors="ignore") as txt_file:
                 for line in txt_file:
@@ -73,34 +77,36 @@ class GrainProcessor:
                 raise ValueError(f"Unknown unit in size_per_bar: {unit}")
 
     @plot_decorator
-    def image(self):
+    def image(self) -> np.ndarray:
         self._update_RGB_image()
         return self._image
 
     @plot_decorator
-    def image_grayscale(self):
+    def image_grayscale(self) -> np.ndarray:
         return self._image_grayscale
 
-    def _read_image(self, path: Path | str):
+    def _read_image(self, path: Path | str) -> np.ndarray:
         image = cv.imread(str(path))
         if image is None:
             raise FileNotFoundError(f"Image not found: {path}")
         return image
 
-    def _convert_to_grayscale(self, image):
+    def _convert_to_grayscale(self, image: np.ndarray) -> np.ndarray:
         return cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
-    def _convert_to_RGB(self, image):
+    def _convert_to_RGB(self, image: np.ndarray) -> np.ndarray:
         return cv.cvtColor(image, cv.COLOR_GRAY2RGB)
 
-    def _update_RGB_image(self):
+    def _update_RGB_image(self) -> None:
         self._image = self._convert_to_RGB(self._image_grayscale)
 
-    def _cut_image(self):
+    def _cut_image(self) -> None:
         self._image_source = self._image_source[:-128]
         self._image_grayscale_source = self._image_grayscale_source[:-128]
 
-    def _filter_image(self, image=None, radius=100, plot=False):
+    def _filter_image(
+        self, image: np.ndarray | None = None, radius: int = 100, plot: bool = False
+    ) -> None:
         if image is None:
             image = self._image_grayscale_source.copy()
         # Apply FFT
@@ -142,7 +148,7 @@ class GrainProcessor:
 
         self._image_grayscale = img_back.astype(np.uint8)
 
-    def adjust_fft_mask(self):
+    def adjust_fft_mask(self) -> None:
         import ipywidgets
 
         def update_image(radius):
@@ -155,7 +161,7 @@ class GrainProcessor:
         ipywidgets.interact(update_image, radius=(0, 250, 1))
 
     @plot_decorator
-    def _threshold(self, blockSize=151):
+    def _threshold(self, blockSize: int = 151) -> np.ndarray:
         # blur to remove gaussian noise
         gray = cv.GaussianBlur(self._image_grayscale, (5, 5), cv.BORDER_DEFAULT)
 
@@ -172,7 +178,7 @@ class GrainProcessor:
         return thresh
 
     @plot_decorator
-    def _opening(self):
+    def _opening(self) -> np.ndarray:
         kernel = np.ones((3, 3), np.uint8)
 
         # apply erosion + dilation 2 times
@@ -183,13 +189,13 @@ class GrainProcessor:
         return opening
 
     @plot_decorator
-    def _background(self):
+    def _background(self) -> np.ndarray:
         kernel = np.ones((3, 3), np.uint8)
         sure_bg = cv.dilate(self._opening(), kernel, iterations=2)
         return sure_bg
 
     @plot_decorator
-    def _foreground(self):
+    def _foreground(self) -> np.ndarray:
         dist_transform = cv.distanceTransform(
             self._opening(), distanceType=cv.DIST_L2, maskSize=3
         )
@@ -202,11 +208,11 @@ class GrainProcessor:
         return sure_fg.astype(np.uint8)
 
     @plot_decorator
-    def _unknown_region(self):
+    def _unknown_region(self) -> np.ndarray:
         return cv.subtract(self._background(), self._foreground())
 
     @plot_decorator
-    def _markers(self):
+    def _markers(self) -> np.ndarray:
         blob_number, markers = cv.connectedComponents(self._foreground())
         markers = markers + 1
         markers[self._unknown_region() == 255] = 0
@@ -217,7 +223,7 @@ class GrainProcessor:
         return markers
 
     @plot_decorator
-    def _image_non_contrast(self):
+    def _image_non_contrast(self) -> np.ndarray:
         markers = self._markers()
         kernel = np.ones((3, 3), np.uint8)
         img_no_contrast = self._image.copy()
@@ -230,10 +236,10 @@ class GrainProcessor:
         return img_no_contrast
 
     @property
-    def clusters(self):
+    def clusters(self) -> list:
         return skimage.measure.regionprops(self._markers())
 
-    def get_diameters(self, in_nm=True):
+    def get_diameters(self, in_nm: bool = True) -> np.ndarray:
         diameters = np.array([cluster.feret_diameter_max for cluster in self.clusters])[
             1:
         ]
@@ -241,19 +247,19 @@ class GrainProcessor:
             diameters *= self.nanometers_per_bar / self.pixels_per_bar
         return diameters
 
-    def get_perimeters(self, in_nm=True):
+    def get_perimeters(self, in_nm: bool = True) -> np.ndarray:
         perimeters = np.array([cluster.perimeter for cluster in self.clusters])[1:]
         if in_nm and self.pixels_per_bar is not None:
             perimeters *= self.nanometers_per_bar / self.pixels_per_bar
         return perimeters
 
-    def get_areas(self, in_nm=True):
+    def get_areas(self, in_nm: bool = True) -> np.ndarray:
         areas = np.array([cluster.area for cluster in self.clusters])[1:]
         if in_nm and self.pixels_per_bar is not None:
             areas *= (self.nanometers_per_bar / self.pixels_per_bar) ** 2
         return areas
 
-    def get_stats(self, in_nm=True):
+    def get_stats(self, in_nm: bool = True) -> dict[str, dict[str, float]]:
         diameters = self.get_diameters(in_nm)
         perimeters = self.get_perimeters(in_nm)
         areas = self.get_areas(in_nm)

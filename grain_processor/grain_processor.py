@@ -9,6 +9,8 @@ import skimage.measure
 from matplotlib import pyplot as plt
 from scipy.stats import lognorm
 
+from .grain_plotter import GrainPlotter
+
 
 def plot_decorator(func):
     @wraps(func)
@@ -53,6 +55,8 @@ class GrainProcessor:
 
         if scale:
             self._get_scale(self.image_path.with_suffix(".txt"))
+
+        self.plotter = GrainPlotter(self)
 
     def _get_scale(self, txt_path: Path | str) -> None:
         try:
@@ -288,179 +292,6 @@ class GrainProcessor:
             },
         }
 
-    def _lognorm_fit(self, data):
-        data = data[data > 0]
-        shape, loc, scale = lognorm.fit(data, floc=0)
-        x = np.linspace(0, np.quantile(data, 0.99), 100)
-        pdf = lognorm.pdf(x, shape, loc, scale)
-
-        return x, pdf
-
-    def _plot_distribution(self, data, xlabel, probability=True, fit=True):
-        max_data = np.quantile(data, 0.99)
-        bins = np.linspace(0, max_data, 50)
-        plt.hist(data, bins=bins, color="teal", alpha=0.6)
-        plt.xlabel(xlabel)
-        plt.ylabel("Count")
-
-        if fit:
-            x, pdf = self._lognorm_fit(data)
-
-            bin_width = bins[1] - bins[0]
-            pdf_scaled = pdf * len(data) * bin_width
-
-            plt.plot(x, pdf_scaled, "r-", linewidth=2, color="lightcoral")
-        if probability:
-            plt.gca().yaxis.set_major_formatter(
-                plt.FuncFormatter(lambda y, _: "{:.0f}".format(y / len(data) * 100))
-            )  # sum of all bins is 100%
-            plt.ylabel("Probability, %")
-
-        plt.show()
-
-    def plot_area_fractions(self, bins=50, return_fig=False):
-        fig, ax = plt.subplots()
-        diameters = self.get_diameters(in_nm=True)
-        areas = self.get_areas(in_nm=True)
-
-        # Remove outliers
-        max_diameter = np.quantile(diameters, 0.99)
-        mask = diameters <= max_diameter
-        diameters = diameters[mask]
-        areas = areas[mask]
-
-        # Define bin edges
-        bin_edges = np.linspace(diameters.min(), diameters.max(), bins + 1)
-        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
-
-        # Sum areas for each bin
-        area_sums, _ = np.histogram(diameters, bins=bin_edges, weights=areas)
-        percentage = (area_sums / area_sums.sum()) * 100
-
-        ax.bar(
-            bin_centers,
-            percentage,
-            width=bin_edges[1] - bin_edges[0],
-            color="teal",
-            alpha=0.6,
-        )
-        ax.set_xlabel("Grain diameter, nm")
-        ax.set_ylabel("Area fraction, %")
-
-        if return_fig:
-            return fig
-
-    def plot_area_fractions_vs_perimeter(self, bins=50, return_fig=False):
-        fig, ax = plt.subplots()
-        perimeters = self.get_perimeters(in_nm=True)
-        areas = self.get_areas(in_nm=True)
-
-        # Remove outliers
-        max_diameter = np.quantile(perimeters, 0.99)
-        mask = perimeters <= max_diameter
-        perimeters = perimeters[mask]
-        areas = areas[mask]
-
-        # Define bin edges
-        bin_edges = np.linspace(perimeters.min(), perimeters.max(), bins + 1)
-        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
-
-        # Sum areas for each bin
-        area_sums, _ = np.histogram(perimeters, bins=bin_edges, weights=areas)
-        percentage = (area_sums / area_sums.sum()) * 100
-
-        ax.bar(
-            bin_centers,
-            percentage,
-            width=bin_edges[1] - bin_edges[0],
-            color="teal",
-            alpha=0.6,
-        )
-        ax.set_xlabel("Grain diameter, nm")
-        ax.set_ylabel("Area fraction, %")
-
-        if return_fig:
-            return fig
-
-    def plot_diameters(self, fit=True, probability=True, return_fig=False):
-        fig = plt.figure()
-        diameters = self.get_diameters(in_nm=True)
-
-        label = "Grain diameter, "
-        if self.pixels_per_bar is not None:
-            label += "nm"
-        else:
-            diameters = self.get_diameters(in_nm=False)
-            label += "px"
-
-        self._plot_distribution(
-            data=diameters, xlabel=label, probability=probability, fit=fit
-        )
-        if return_fig:
-            return fig
-
-    def plot_perimeters(self, fit=True, probability=True, return_fig=False):
-        fig = plt.figure()
-        perimeters = self.get_perimeters(in_nm=True)
-
-        label = r"Grain perimeter, "
-        if self.pixels_per_bar is not None:
-            label += "nm"
-        else:
-            perimeters = self.get_perimeters(in_nm=False)
-            label += "px"
-
-        self._plot_distribution(
-            data=perimeters, xlabel=label, probability=probability, fit=fit
-        )
-        if return_fig:
-            return fig
-
-    def plot_areas(self, fit=False, probability=True, return_fig=False):
-        fig = plt.figure()
-        areas = self.get_areas()
-
-        label = r"Grain area, "
-        if self.pixels_per_bar is not None:
-            areas = self.get_areas(in_nm=True)
-            label += "nm$^2$"
-        else:
-            areas = self.get_areas(in_nm=False)
-            label += "px$^2$"
-
-        self._plot_distribution(
-            data=areas, xlabel=label, probability=probability, fit=fit
-        )
-        if return_fig:
-            return fig
-
-    def plot_perimeters_vs_diameters(self, return_fig=False, fit=False):
-        fig = plt.figure()
-        diameters = self.get_diameters(in_nm=True)
-        perimeters = self.get_perimeters(in_nm=True)
-
-        plt.scatter(diameters, perimeters, color="teal", alpha=0.6)
-        plt.xlabel("Grain diameter, nm")
-        plt.ylabel("Grain perimeter, nm")
-
-        if fit:
-            coeffs = np.polyfit(diameters, perimeters, 1)
-            fit_line = np.poly1d(coeffs)
-            slope = coeffs[0]
-            plt.plot(
-                diameters,
-                fit_line(diameters),
-                color="red",
-                linestyle="--",
-                linewidth=2,
-                alpha=0.6,
-            )
-            plt.legend([f"Linear fit (slope={slope:.2f})", "Data"])
-
-        plt.show()
-        if return_fig:
-            return fig
-
     def save_results(self, path: Path | str = "results"):
         path = Path(path)
         path.mkdir(exist_ok=True)
@@ -468,24 +299,28 @@ class GrainProcessor:
         cv.imwrite(path / "image.png", self._image_grayscale)
         cv.imwrite(path / "image_with_markers.png", self._image_non_contrast())
 
-        self.plot_diameters(return_fig=True).savefig(path / "diameters.png", dpi=300)
+        self.plotter.plot_diameters(return_fig=True).savefig(
+            path / "diameters.png", dpi=300
+        )
         with open(path / "diameters.txt", "w") as f:
             f.write("\n".join(map(str, self.get_diameters())))
 
-        self.plot_areas(return_fig=True).savefig(path / "areas.png", dpi=300)
+        self.plotter.plot_areas(return_fig=True).savefig(path / "areas.png", dpi=300)
         with open(path / "areas.txt", "w") as f:
             f.write("\n".join(map(str, self.get_areas())))
 
         with open(path / "diameters_fit.txt", "w") as f:
-            x, pdf = self._lognorm_fit(self.get_diameters())
+            x, pdf = self.plotter._lognorm_fit(self.get_diameters())
             f.write("\n".join(f"{x[i]}, {pdf[i]}" for i in range(len(x))))
 
-        self.plot_perimeters(return_fig=True).savefig(path / "perimeters.png", dpi=300)
+        self.plotter.plot_perimeters(return_fig=True).savefig(
+            path / "perimeters.png", dpi=300
+        )
         with open(path / "perimeters.txt", "w") as f:
             f.write("\n".join(map(str, self.get_perimeters())))
 
         with open(path / "perimeters_fit.txt", "w") as f:
-            x, pdf = self._lognorm_fit(self.get_perimeters())
+            x, pdf = self.plotter._lognorm_fit(self.get_perimeters())
             f.write("\n".join(f"{x[i]}, {pdf[i]}" for i in range(len(x))))
 
         with open(path / "stats.txt", "w") as f:
@@ -495,13 +330,13 @@ class GrainProcessor:
                 for subkey, subvalue in value.items():
                     f.write(f"\t{subkey}: {subvalue}\n")
 
-        self.plot_perimeters_vs_diameters(return_fig=True, fit=True).savefig(
+        self.plotter.plot_perimeters_vs_diameters(return_fig=True, fit=True).savefig(
             path / "perimeters_vs_diameters.png", dpi=300
         )
 
-        self.plot_area_fractions(return_fig=True).savefig(
+        self.plotter.plot_area_fractions(return_fig=True).savefig(
             path / "area_fractions.png", dpi=300
         )
-        self.plot_area_fractions_vs_perimeter(return_fig=True).savefig(
+        self.plotter.plot_area_fractions_vs_perimeter(return_fig=True).savefig(
             path / "area_fractions_vs_perimeter.png", dpi=300
         )

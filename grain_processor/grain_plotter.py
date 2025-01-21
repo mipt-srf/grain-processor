@@ -104,7 +104,7 @@ class GrainPlotter:
         diameters = self.processor.get_diameters(in_nm=True)
 
         label = "Grain diameter, "
-        if self.processor.pixels_per_bar is not None:
+        if self.processor.nm_per_pixel is not None:
             label += "nm"
         else:
             diameters = self.processor.get_diameters(in_nm=False)
@@ -121,7 +121,7 @@ class GrainPlotter:
         perimeters = self.processor.get_perimeters(in_nm=True)
 
         label = r"Grain perimeter, "
-        if self.processor.pixels_per_bar is not None:
+        if self.processor.nm_per_pixel is not None:
             label += "nm"
         else:
             perimeters = self.processor.get_perimeters(in_nm=False)
@@ -137,7 +137,7 @@ class GrainPlotter:
         fig = plt.figure()
 
         label = r"Grain area, "
-        if self.processor.pixels_per_bar is not None:
+        if self.processor.nm_per_pixel is not None:
             areas = self.processor.get_areas(in_nm=True)
             label += "nm$^2$"
         else:

@@ -37,11 +37,12 @@ class GrainProcessor:
         image_path: Path | str,
         cut_SEM: bool = False,
         fft_filter: bool = False,
-        scale: bool = True,
+        nm_per_pixel: float | None = None,
     ) -> None:
         self.image_path = Path(image_path)
         self._image_source = self._read_image(self.image_path)
         self._image_grayscale_source = self._convert_to_grayscale(self._image_source)
+        self.nm_per_pixel = nm_per_pixel or self._get_scale(self.image_path.with_suffix(".txt"))
 
         if cut_SEM:
             self._cut_image()
@@ -53,9 +54,6 @@ class GrainProcessor:
             self._filter_image()
             self._update_RGB_image()
 
-        if scale:
-            self._get_scale(self.image_path.with_suffix(".txt"))
-
         self.plotter = GrainPlotter(self)
 
     def _get_scale(self, txt_path: Path | str) -> None:
@@ -63,22 +61,23 @@ class GrainProcessor:
             with open(txt_path, "r", errors="ignore") as txt_file:
                 for line in txt_file:
                     if line.startswith("$$SM_MICRON_BAR"):
-                        self.pixels_per_bar = int(line.split()[1])
+                        pixels_per_bar = int(line.split()[1])
                     elif line.startswith("$$SM_MICRON_MARKER"):
                         size_per_bar = line.split()[1]
         except FileNotFoundError as e:
             print(f"Error reading scale information: {e}")
-            self.pixels_per_bar = None
-            self.nanometers_per_bar = None
+            nm_per_pixel = None
         else:
             unit = size_per_bar[-2:]
             size = float(size_per_bar[:-2])
             if unit == "nm":
-                self.nanometers_per_bar = size
+                nm_per_bar = size
             elif unit == "um":
-                self.nanometers_per_bar = size * 1e3  # convert to nanometers
+                nm_per_bar = size * 1e3  # convert to nanometers
             else:
                 raise ValueError(f"Unknown unit in size_per_bar: {unit}")
+            nm_per_pixel = nm_per_bar / pixels_per_bar
+        return nm_per_pixel
 
     @plot_decorator
     def image(self) -> np.ndarray:
@@ -247,20 +246,20 @@ class GrainProcessor:
         diameters = np.array([cluster.feret_diameter_max for cluster in self.clusters])[
             1:
         ]
-        if in_nm and self.pixels_per_bar is not None:
-            diameters *= self.nanometers_per_bar / self.pixels_per_bar
+        if in_nm and self.nm_per_pixel is not None:
+            diameters *= self.nm_per_pixel
         return diameters
 
     def get_perimeters(self, in_nm: bool = True) -> np.ndarray:
         perimeters = np.array([cluster.perimeter for cluster in self.clusters])[1:]
-        if in_nm and self.pixels_per_bar is not None:
-            perimeters *= self.nanometers_per_bar / self.pixels_per_bar
+        if in_nm and self.nm_per_pixel is not None:
+            perimeters *= self.nm_per_pixel
         return perimeters
 
     def get_areas(self, in_nm: bool = True) -> np.ndarray:
         areas = np.array([cluster.area for cluster in self.clusters])[1:]
-        if in_nm and self.pixels_per_bar is not None:
-            areas *= (self.nanometers_per_bar / self.pixels_per_bar) ** 2
+        if in_nm and self.nm_per_pixel is not None:
+            areas *= (self.nm_per_pixel) ** 2
         return areas
 
     def get_stats(self, in_nm: bool = True) -> dict[str, dict[str, float]]:

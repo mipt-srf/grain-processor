@@ -9,11 +9,14 @@ from .utils import plot_decorator
 
 
 class WatershedSegmenter:
+    THRESHOLD_BLOCK_SIZE = 151
+    DISTANCE_TRANSFORM_THRESHOLD = 0.3
+
     def __init__(self, image: np.ndarray) -> None:
         self.image = image
 
     @plot_decorator
-    def threshold(self, blockSize: int = 151) -> np.ndarray:
+    def threshold(self) -> np.ndarray:
         # blur to remove gaussian noise
         gray = cv.GaussianBlur(self.image, (5, 5), cv.BORDER_DEFAULT)
 
@@ -23,7 +26,7 @@ class WatershedSegmenter:
             maxValue=255,
             adaptiveMethod=cv.ADAPTIVE_THRESH_GAUSSIAN_C,
             thresholdType=cv.THRESH_BINARY,
-            blockSize=blockSize,
+            blockSize=self.THRESHOLD_BLOCK_SIZE,
             C=0,
         )
 
@@ -53,7 +56,7 @@ class WatershedSegmenter:
         )
         ret, sure_fg = cv.threshold(
             dist_transform,
-            thresh=0.3 * dist_transform.max(),
+            thresh=self.DISTANCE_TRANSFORM_THRESHOLD * dist_transform.max(),
             maxval=255,
             type=cv.THRESH_BINARY,
         )

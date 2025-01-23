@@ -1,8 +1,6 @@
 """Based on the tutorial https://docs.opencv.org/4.x/d3/db4/tutorial_py_watershed.html"""
 
-from functools import wraps
 from pathlib import Path
-from typing import Callable
 
 import cv2 as cv
 import numpy as np
@@ -11,25 +9,7 @@ import skimage.measure._regionprops
 from matplotlib import pyplot as plt
 
 from .grain_plotter import GrainPlotter
-
-
-def plot_decorator(func: Callable) -> Callable:
-    @wraps(func)
-    def wrapper(*args, plot: bool = False, **kwargs) -> np.ndarray:
-        # call the original function to get the result
-        result = func(*args, **kwargs)
-
-        # if plot=True, plot the result
-        if plot:
-            plt.figure()
-            plt.imshow(result, cmap="gray")
-            plt.title(func.__name__.replace("_", " ").lstrip().capitalize())
-            plt.axis("off")
-            plt.show()
-
-        return result
-
-    return wrapper
+from .utils import plot_decorator
 
 
 class GrainProcessor:

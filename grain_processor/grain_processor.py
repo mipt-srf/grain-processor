@@ -23,7 +23,9 @@ class GrainProcessor:
         self.image_path = Path(image_path)
         self._image_source = self._read_image(self.image_path)
         self._image_grayscale_source = self._convert_to_grayscale(self._image_source)
-        self.nm_per_pixel = nm_per_pixel or self._get_scale(self.image_path.with_suffix(".txt"))
+        self.nm_per_pixel = nm_per_pixel or self._get_scale(
+            self.image_path.with_suffix(".txt")
+        )
 
         if cut_SEM:
             self._cut_image()

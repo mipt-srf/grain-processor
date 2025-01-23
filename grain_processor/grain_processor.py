@@ -87,11 +87,8 @@ class GrainProcessor:
         self._image_source = self._image_source[:-128]
         self._image_grayscale_source = self._image_grayscale_source[:-128]
 
-    def _filter_image(
-        self, image: np.ndarray | None = None, radius: int = 100, plot: bool = False
-    ) -> None:
-        if image is None:
-            image = self._image_grayscale_source.copy()
+    def _filter_image(self, radius: int = 100, plot: bool = False) -> None:
+        image = self._image_grayscale_source.copy()
         # Apply FFT
         f = np.fft.fft2(image)
         fshift = np.fft.fftshift(f)

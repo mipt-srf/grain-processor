@@ -3,12 +3,19 @@ import numpy as np
 from matplotlib.figure import Figure
 from scipy.stats import lognorm
 
-from .grain_processor import GrainProcessor
-
 
 class GrainPlotter:
-    def __init__(self, processor: GrainProcessor) -> None:
-        self.processor = processor
+    def __init__(
+        self,
+        diameters: np.ndarray,
+        perimeters: np.ndarray,
+        areas: np.ndarray,
+        nm_per_pixel: float | None = None,
+    ) -> None:
+        self._diameters = diameters
+        self._perimeters = perimeters
+        self._areas = areas
+        self._nm_per_pixel = nm_per_pixel
 
     def _lognorm_fit(self, data: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         data = data[data > 0]
@@ -44,8 +51,8 @@ class GrainPlotter:
         self, bins: int = 50, return_fig: bool = False
     ) -> Figure | None:
         fig, ax = plt.subplots()
-        diameters = self.processor.get_diameters(in_nm=True)
-        areas = self.processor.get_areas(in_nm=True)
+        diameters = self._diameters
+        areas = self._areas
 
         # Remove outliers
         max_diameter = np.quantile(diameters, 0.99)
@@ -79,8 +86,8 @@ class GrainPlotter:
         self, bins: int = 50, return_fig: bool = False
     ) -> Figure | None:
         fig, ax = plt.subplots()
-        perimeters = self.processor.get_perimeters(in_nm=True)
-        areas = self.processor.get_areas(in_nm=True)
+        perimeters = self._perimeters
+        areas = self._areas
 
         # Remove outliers
         max_diameter = np.quantile(perimeters, 0.99)
@@ -114,13 +121,12 @@ class GrainPlotter:
         self, fit: bool = True, probability: bool = True, return_fig: bool = False
     ) -> Figure | None:
         fig = plt.figure()
-        diameters = self.processor.get_diameters(in_nm=True)
+        diameters = self._diameters
 
         label = "Grain diameter, "
-        if self.processor.nm_per_pixel is not None:
+        if self._nm_per_pixel is not None:
             label += "nm"
         else:
-            diameters = self.processor.get_diameters(in_nm=False)
             label += "px"
 
         self._plot_distribution(
@@ -134,13 +140,12 @@ class GrainPlotter:
         self, fit: bool = True, probability: bool = True, return_fig: bool = False
     ) -> Figure | None:
         fig = plt.figure()
-        perimeters = self.processor.get_perimeters(in_nm=True)
+        perimeters = self._perimeters
 
         label = r"Grain perimeter, "
-        if self.processor.nm_per_pixel is not None:
+        if self._nm_per_pixel is not None:
             label += "nm"
         else:
-            perimeters = self.processor.get_perimeters(in_nm=False)
             label += "px"
 
         self._plot_distribution(
@@ -156,11 +161,11 @@ class GrainPlotter:
         fig = plt.figure()
 
         label = r"Grain area, "
-        if self.processor.nm_per_pixel is not None:
-            areas = self.processor.get_areas(in_nm=True)
+        if self._nm_per_pixel is not None:
+            areas = self._areas
             label += "nm$^2$"
         else:
-            areas = self.processor.get_areas(in_nm=False)
+            areas = self._areas
             label += "px$^2$"
 
         self._plot_distribution(
@@ -174,8 +179,8 @@ class GrainPlotter:
         self, return_fig: bool = False, fit: bool = False
     ) -> Figure | None:
         fig = plt.figure()
-        diameters = self.processor.get_diameters(in_nm=True)
-        perimeters = self.processor.get_perimeters(in_nm=True)
+        diameters = self._diameters
+        perimeters = self._perimeters
 
         plt.scatter(diameters, perimeters, color="teal", alpha=0.6)
         plt.xlabel("Grain diameter, nm")

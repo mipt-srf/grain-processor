@@ -37,8 +37,6 @@ class GrainProcessor:
             self._filter_image()
             self._update_RGB_image()
 
-        self.plotter = GrainPlotter(self)
-
     def _get_scale(self, txt_path: Path | str) -> float | None:
         try:
             with open(txt_path, "r", errors="ignore") as txt_file:
@@ -281,28 +279,33 @@ class GrainProcessor:
         cv.imwrite(path / "image.png", self._image_grayscale)
         cv.imwrite(path / "image_with_markers.png", self._image_non_contrast())
 
-        self.plotter.plot_diameters(return_fig=True).savefig(
-            path / "diameters.png", dpi=300
+        plotter = GrainPlotter(
+            diameters=self.get_diameters(),
+            perimeters=self.get_perimeters(),
+            areas=self.get_areas(),
+            nm_per_pixel=self.nm_per_pixel,
         )
+
+        plotter.plot_diameters(return_fig=True).savefig(path / "diameters.png", dpi=300)
         with open(path / "diameters.txt", "w") as f:
             f.write("\n".join(map(str, self.get_diameters())))
 
-        self.plotter.plot_areas(return_fig=True).savefig(path / "areas.png", dpi=300)
+        plotter.plot_areas(return_fig=True).savefig(path / "areas.png", dpi=300)
         with open(path / "areas.txt", "w") as f:
             f.write("\n".join(map(str, self.get_areas())))
 
         with open(path / "diameters_fit.txt", "w") as f:
-            x, pdf = self.plotter._lognorm_fit(self.get_diameters())
+            x, pdf = plotter._lognorm_fit(self.get_diameters())
             f.write("\n".join(f"{x[i]}, {pdf[i]}" for i in range(len(x))))
 
-        self.plotter.plot_perimeters(return_fig=True).savefig(
+        plotter.plot_perimeters(return_fig=True).savefig(
             path / "perimeters.png", dpi=300
         )
         with open(path / "perimeters.txt", "w") as f:
             f.write("\n".join(map(str, self.get_perimeters())))
 
         with open(path / "perimeters_fit.txt", "w") as f:
-            x, pdf = self.plotter._lognorm_fit(self.get_perimeters())
+            x, pdf = plotter._lognorm_fit(self.get_perimeters())
             f.write("\n".join(f"{x[i]}, {pdf[i]}" for i in range(len(x))))
 
         with open(path / "stats.txt", "w") as f:
@@ -312,13 +315,13 @@ class GrainProcessor:
                 for subkey, subvalue in value.items():
                     f.write(f"\t{subkey}: {subvalue}\n")
 
-        self.plotter.plot_perimeters_vs_diameters(return_fig=True, fit=True).savefig(
+        plotter.plot_perimeters_vs_diameters(return_fig=True, fit=True).savefig(
             path / "perimeters_vs_diameters.png", dpi=300
         )
 
-        self.plotter.plot_area_fractions(return_fig=True).savefig(
+        plotter.plot_area_fractions(return_fig=True).savefig(
             path / "area_fractions.png", dpi=300
         )
-        self.plotter.plot_area_fractions_vs_perimeter(return_fig=True).savefig(
+        plotter.plot_area_fractions_vs_perimeter(return_fig=True).savefig(
             path / "area_fractions_vs_perimeter.png", dpi=300
         )

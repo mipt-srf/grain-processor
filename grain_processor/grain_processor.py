@@ -132,7 +132,7 @@ class GrainProcessor:
         import ipywidgets
 
         def update_image(radius):
-            self._image_grayscale = self._filter_image(radius, plot=True)
+            self._filter_image(radius, plot=True)
             plt.imshow(self._image_grayscale, cmap="gray")
             plt.title(f"FFT Filtered Image with radius {radius}")
             plt.axis("off")

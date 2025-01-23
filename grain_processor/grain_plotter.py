@@ -1,20 +1,29 @@
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import numpy as np
 from scipy.stats import lognorm
 
+from .grain_processor import GrainProcessor
+
 
 class GrainPlotter:
-    def __init__(self, processor):
+    def __init__(self, processor: GrainProcessor) -> None:
         self.processor = processor
 
-    def _lognorm_fit(self, data):
+    def _lognorm_fit(self, data: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         data = data[data > 0]
         shape, loc, scale = lognorm.fit(data, floc=0)
         x = np.linspace(0, np.quantile(data, 0.99), 100)
         pdf = lognorm.pdf(x, shape, loc, scale)
         return x, pdf
 
-    def _plot_distribution(self, data, xlabel, probability=True, fit=True):
+    def _plot_distribution(
+        self, 
+        data: np.ndarray, 
+        xlabel: str, 
+        probability: bool = True, 
+        fit: bool = True
+    ) -> None:
         max_data = np.quantile(data, 0.99)
         bins = np.linspace(0, max_data, 50)
         plt.hist(data, bins=bins, color="teal", alpha=0.6)
@@ -35,7 +44,11 @@ class GrainPlotter:
 
         plt.show()
 
-    def plot_area_fractions(self, bins=50, return_fig=False):
+    def plot_area_fractions(
+        self, 
+        bins: int = 50, 
+        return_fig: bool = False
+    ) -> Figure | None:
         fig, ax = plt.subplots()
         diameters = self.processor.get_diameters(in_nm=True)
         areas = self.processor.get_areas(in_nm=True)
@@ -66,8 +79,13 @@ class GrainPlotter:
 
         if return_fig:
             return fig
+        return None
 
-    def plot_area_fractions_vs_perimeter(self, bins=50, return_fig=False):
+    def plot_area_fractions_vs_perimeter(
+        self, 
+        bins: int = 50, 
+        return_fig: bool = False
+    ) -> Figure | None:
         fig, ax = plt.subplots()
         perimeters = self.processor.get_perimeters(in_nm=True)
         areas = self.processor.get_areas(in_nm=True)
@@ -98,8 +116,14 @@ class GrainPlotter:
 
         if return_fig:
             return fig
+        return None
 
-    def plot_diameters(self, fit=True, probability=True, return_fig=False):
+    def plot_diameters(
+        self, 
+        fit: bool = True, 
+        probability: bool = True, 
+        return_fig: bool = False
+    ) -> Figure | None:
         fig = plt.figure()
         diameters = self.processor.get_diameters(in_nm=True)
 
@@ -115,8 +139,14 @@ class GrainPlotter:
         )
         if return_fig:
             return fig
+        return None
 
-    def plot_perimeters(self, fit=True, probability=True, return_fig=False):
+    def plot_perimeters(
+        self, 
+        fit: bool = True, 
+        probability: bool = True, 
+        return_fig: bool = False
+    ) -> Figure | None:
         fig = plt.figure()
         perimeters = self.processor.get_perimeters(in_nm=True)
 
@@ -132,8 +162,14 @@ class GrainPlotter:
         )
         if return_fig:
             return fig
+        return None
 
-    def plot_areas(self, fit=False, probability=True, return_fig=False):
+    def plot_areas(
+        self, 
+        fit: bool = False, 
+        probability: bool = True, 
+        return_fig: bool = False
+    ) -> Figure | None:
         fig = plt.figure()
 
         label = r"Grain area, "
@@ -149,8 +185,13 @@ class GrainPlotter:
         )
         if return_fig:
             return fig
+        return None
 
-    def plot_perimeters_vs_diameters(self, return_fig=False, fit=False):
+    def plot_perimeters_vs_diameters(
+        self, 
+        return_fig: bool = False, 
+        fit: bool = False
+    ) -> Figure | None:
         fig = plt.figure()
         diameters = self.processor.get_diameters(in_nm=True)
         perimeters = self.processor.get_perimeters(in_nm=True)
@@ -176,3 +217,4 @@ class GrainPlotter:
         plt.show()
         if return_fig:
             return fig
+        return None

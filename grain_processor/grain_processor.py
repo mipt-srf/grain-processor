@@ -2,19 +2,20 @@
 
 from functools import wraps
 from pathlib import Path
+from typing import Callable
 
 import cv2 as cv
 import numpy as np
 import skimage.measure
+import skimage.measure._regionprops
 from matplotlib import pyplot as plt
-from scipy.stats import lognorm
 
 from .grain_plotter import GrainPlotter
 
 
-def plot_decorator(func):
+def plot_decorator(func: Callable) -> Callable:
     @wraps(func)
-    def wrapper(*args, plot=False, **kwargs):
+    def wrapper(*args, plot: bool = False, **kwargs) -> np.ndarray:
         # call the original function to get the result
         result = func(*args, **kwargs)
 
@@ -56,7 +57,7 @@ class GrainProcessor:
 
         self.plotter = GrainPlotter(self)
 
-    def _get_scale(self, txt_path: Path | str) -> None:
+    def _get_scale(self, txt_path: Path | str) -> float | None:
         try:
             with open(txt_path, "r", errors="ignore") as txt_file:
                 for line in txt_file:
@@ -239,7 +240,7 @@ class GrainProcessor:
         return img_no_contrast
 
     @property
-    def clusters(self) -> list:
+    def clusters(self) -> list[skimage.measure._regionprops.RegionProperties]:
         return skimage.measure.regionprops(self._markers())
 
     def get_diameters(self, in_nm: bool = True) -> np.ndarray:
@@ -291,7 +292,7 @@ class GrainProcessor:
             },
         }
 
-    def save_results(self, path: Path | str = "results"):
+    def save_results(self, path: Path | str = "results") -> None:
         path = Path(path)
         path.mkdir(exist_ok=True)
 

@@ -128,18 +128,19 @@ class GrainProcessor:
 
         self._image_grayscale = img_back.astype(np.uint8)
 
+    def update_fft_radius(self, radius, plot_filter=False) -> None:
+        self._filter_image(radius, plot=plot_filter)
+        self.segmenter = WatershedSegmenter(
+            self._image_grayscale
+        )  # update segmenter with new image
+
     def adjust_fft_mask(self) -> None:
         import ipywidgets
 
         def update_image(radius):
-            self._filter_image(radius, plot=True)
-            self.segmenter = WatershedSegmenter(
-                self._image_grayscale
-            )  # update segmenter with new image
-            plt.imshow(self._image_grayscale, cmap="gray")
+            self.update_fft_radius(radius, plot_filter=True)
+            self.image_grayscale(plot=True)
             plt.title(f"FFT Filtered Image with radius {radius}")
-            plt.axis("off")
-            plt.show()
 
         ipywidgets.interact(update_image, radius=(0, 250, 1))
 

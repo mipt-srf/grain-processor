@@ -110,7 +110,7 @@ class GrainPlotter:
             color="teal",
             alpha=0.6,
         )
-        ax.set_xlabel("Grain diameter, nm")
+        ax.set_xlabel("Grain perimeter, nm")
         ax.set_ylabel("Area fraction, %")
 
         if return_fig:

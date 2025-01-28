@@ -25,10 +25,15 @@ class GrainPlotter:
         return x, pdf
 
     def _plot_distribution(
-        self, data: np.ndarray, xlabel: str, probability: bool = True, fit: bool = True
+        self,
+        data: np.ndarray,
+        xlabel: str,
+        nm_per_bin=1,
+        probability: bool = True,
+        fit: bool = True,
     ) -> None:
         max_data = np.quantile(data, 0.99)
-        bins = np.linspace(0, max_data, 50)
+        bins = np.arange(0.5, max_data + 1, nm_per_bin)
         plt.hist(data, bins=bins, color="teal", alpha=0.6)
         plt.xlabel(xlabel)
         plt.ylabel("Count")
@@ -48,7 +53,7 @@ class GrainPlotter:
         plt.show()
 
     def plot_area_fractions(
-        self, bins: int = 50, return_fig: bool = False
+        self, nm_per_bin=1, return_fig: bool = False
     ) -> Figure | None:
         fig, ax = plt.subplots()
         diameters = self._diameters
@@ -61,7 +66,7 @@ class GrainPlotter:
         areas = areas[mask]
 
         # Define bin edges
-        bin_edges = np.linspace(diameters.min(), diameters.max(), bins + 1)
+        bin_edges = np.arange(0.5, diameters.max() + 1, nm_per_bin)
         bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
 
         # Sum areas for each bin
@@ -83,7 +88,7 @@ class GrainPlotter:
         return None
 
     def plot_area_fractions_vs_perimeter(
-        self, bins: int = 50, return_fig: bool = False
+        self, nm_per_bin=3, return_fig: bool = False
     ) -> Figure | None:
         fig, ax = plt.subplots()
         perimeters = self._perimeters
@@ -96,7 +101,7 @@ class GrainPlotter:
         areas = areas[mask]
 
         # Define bin edges
-        bin_edges = np.linspace(perimeters.min(), perimeters.max(), bins + 1)
+        bin_edges = np.arange(0.5, perimeters.max() + 1, nm_per_bin)
         bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
 
         # Sum areas for each bin
@@ -149,7 +154,11 @@ class GrainPlotter:
             label += "px"
 
         self._plot_distribution(
-            data=perimeters, xlabel=label, probability=probability, fit=fit
+            data=perimeters,
+            xlabel=label,
+            probability=probability,
+            fit=fit,
+            nm_per_bin=3,
         )
         if return_fig:
             return fig
@@ -169,7 +178,7 @@ class GrainPlotter:
             label += "px$^2$"
 
         self._plot_distribution(
-            data=areas, xlabel=label, probability=probability, fit=fit
+            data=areas, xlabel=label, probability=probability, fit=fit, nm_per_bin=7.5
         )
         if return_fig:
             return fig

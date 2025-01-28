@@ -133,6 +133,9 @@ class GrainProcessor:
 
         def update_image(radius):
             self._filter_image(radius, plot=True)
+            self.segmenter = WatershedSegmenter(
+                self._image_grayscale
+            )  # update segmenter with new image
             plt.imshow(self._image_grayscale, cmap="gray")
             plt.title(f"FFT Filtered Image with radius {radius}")
             plt.axis("off")

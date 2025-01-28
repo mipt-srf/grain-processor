@@ -17,7 +17,6 @@ def plot_decorator(func: Callable) -> Callable:
             plt.imshow(result, cmap="gray")
             plt.title(func.__name__.replace("_", " ").lstrip().capitalize())
             plt.axis("off")
-            plt.show()
 
         return result
 

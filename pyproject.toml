@@ -1,6 +1,6 @@
 [project]
 name = "grain-processor"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Package for processing SEM images of films"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -11,9 +11,6 @@ dependencies = [
     "scikit-image>=0.24.0",
 ]
 
-[project.scripts]
-grain-processor = "grain_processor:main"
-
 [project.optional-dependencies]
 plot = [
     "ipympl>=0.9.4",
@@ -21,8 +18,8 @@ plot = [
 ]
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
 [tool.uv]
 dev-dependencies = [

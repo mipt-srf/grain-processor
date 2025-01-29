@@ -197,7 +197,7 @@ class GrainProcessor:
 
     def save_results(self, path: Path | str = "results") -> None:
         path = Path(path)
-        path.mkdir(exist_ok=True)
+        path.mkdir(exist_ok=True, parents=True)
 
         cv.imwrite(path / "image.png", self._image_grayscale)
         cv.imwrite(

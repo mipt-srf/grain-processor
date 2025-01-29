@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
 from scipy.stats import lognorm
+from .utils import get_hist_data
 
 
 class GrainPlotter:
@@ -35,15 +36,16 @@ class GrainPlotter:
         weights=None,
         quantile=0.995,
     ) -> None:
-        max_data = np.quantile(data, quantile)
-        bins = np.arange(0.5, max_data + 1, nm_per_bin)
-        plt.hist(data, bins=bins, color="teal", alpha=0.6, weights=weights)
+        bins, hist = get_hist_data(
+            data=data, nm_per_bin=nm_per_bin, quantile=quantile, weights=weights
+        )
+        plt.bar(bins, hist, width=nm_per_bin, color="teal", alpha=0.6)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
 
         if fit:
             x, pdf = self._lognorm_fit(data)
-            bin_width = bins[1] - bins[0]
+            bin_width = nm_per_bin
             pdf_scaled = pdf * len(data) * bin_width
             plt.plot(x, pdf_scaled, "r-", linewidth=2, color="lightcoral")
 

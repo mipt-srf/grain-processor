@@ -205,33 +205,37 @@ class GrainProcessor:
             self.segmenter.marked_image().astype(np.uint8),
         )
 
+        diameters = self.get_diameters()
+        perimeters = self.get_perimeters()
+        areas = self.get_areas()
+
         plotter = GrainPlotter(
-            diameters=self.get_diameters(),
-            perimeters=self.get_perimeters(),
-            areas=self.get_areas(),
+            diameters=diameters,
+            perimeters=perimeters,
+            areas=areas,
             nm_per_pixel=self.nm_per_pixel,
         )
 
         plotter.plot_diameters(return_fig=True).savefig(path / "diameters.png", dpi=300)
         with open(path / "diameters.txt", "w") as f:
-            f.write("\n".join(map(str, self.get_diameters())))
+            f.write("\n".join(map(str, diameters)))
 
         plotter.plot_areas(return_fig=True).savefig(path / "areas.png", dpi=300)
         with open(path / "areas.txt", "w") as f:
-            f.write("\n".join(map(str, self.get_areas())))
+            f.write("\n".join(map(str, areas)))
 
         with open(path / "diameters_fit.txt", "w") as f:
-            x, pdf = plotter._lognorm_fit(self.get_diameters())
+            x, pdf = plotter._lognorm_fit(diameters)
             f.write("\n".join(f"{x[i]}, {pdf[i]}" for i in range(len(x))))
 
         plotter.plot_perimeters(return_fig=True).savefig(
             path / "perimeters.png", dpi=300
         )
         with open(path / "perimeters.txt", "w") as f:
-            f.write("\n".join(map(str, self.get_perimeters())))
+            f.write("\n".join(map(str, perimeters)))
 
         with open(path / "perimeters_fit.txt", "w") as f:
-            x, pdf = plotter._lognorm_fit(self.get_perimeters())
+            x, pdf = plotter._lognorm_fit(perimeters)
             f.write("\n".join(f"{x[i]}, {pdf[i]}" for i in range(len(x))))
 
         with open(path / "stats.txt", "w") as f:

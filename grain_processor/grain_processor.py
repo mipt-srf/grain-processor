@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 
 from .grain_plotter import GrainPlotter
 from .grain_segmenter import WatershedSegmenter
-from .utils import plot_decorator
+from .utils import plot_decorator, get_hist_data
 
 
 class GrainProcessor:
@@ -255,3 +255,15 @@ class GrainProcessor:
         plotter.plot_area_fractions_vs_perimeter(return_fig=True).savefig(
             path / "area_fractions_vs_perimeter.png", dpi=300
         )
+        with open(path / "area_fractions.txt", "w") as f:
+            fractions = areas / areas.sum() * 100
+            bins, hist = get_hist_data(
+                data=diameters, nm_per_bin=1, quantile=0.995, weights=fractions
+            )
+            f.write("\n".join(f"{bins[i]}, {hist[i]}" for i in range(len(bins))))
+
+        with open(path / "area_fractions_vs_perimeter.txt", "w") as f:
+            bins, hist = get_hist_data(
+                data=perimeters, nm_per_bin=3.5, quantile=0.995, weights=fractions
+            )
+            f.write("\n".join(f"{bins[i]}, {hist[i]}" for i in range(len(bins))))

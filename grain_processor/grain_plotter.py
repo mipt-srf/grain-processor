@@ -28,15 +28,18 @@ class GrainPlotter:
         self,
         data: np.ndarray,
         xlabel: str,
+        ylabel: str = "Count",
         nm_per_bin=1,
         probability: bool = True,
         fit: bool = True,
+        weights=None,
+        quantile=0.995,
     ) -> None:
-        max_data = np.quantile(data, 0.99)
+        max_data = np.quantile(data, quantile)
         bins = np.arange(0.5, max_data + 1, nm_per_bin)
-        plt.hist(data, bins=bins, color="teal", alpha=0.6)
+        plt.hist(data, bins=bins, color="teal", alpha=0.6, weights=weights)
         plt.xlabel(xlabel)
-        plt.ylabel("Count")
+        plt.ylabel(ylabel)
 
         if fit:
             x, pdf = self._lognorm_fit(data)
@@ -50,73 +53,45 @@ class GrainPlotter:
             )
             plt.ylabel("Probability, %")
 
-        plt.show()
-
     def plot_area_fractions(
         self, nm_per_bin=1, return_fig: bool = False
     ) -> Figure | None:
-        fig, ax = plt.subplots()
+        fig = plt.figure()
         diameters = self._diameters
         areas = self._areas
+        fractions = areas / areas.sum() * 100
 
-        # Remove outliers
-        max_diameter = np.quantile(diameters, 0.99)
-        mask = diameters <= max_diameter
-        diameters = diameters[mask]
-        areas = areas[mask]
-
-        # Define bin edges
-        bin_edges = np.arange(0.5, diameters.max() + 1, nm_per_bin)
-        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
-
-        # Sum areas for each bin
-        area_sums, _ = np.histogram(diameters, bins=bin_edges, weights=areas)
-        percentage = (area_sums / area_sums.sum()) * 100
-
-        ax.bar(
-            bin_centers,
-            percentage,
-            width=bin_edges[1] - bin_edges[0],
-            color="teal",
-            alpha=0.6,
+        self._plot_distribution(
+            data=diameters,
+            xlabel="Grain diameter, nm",
+            ylabel="Area fraction, %",
+            nm_per_bin=nm_per_bin,
+            probability=False,
+            fit=False,
+            weights=fractions,
         )
-        ax.set_xlabel("Grain diameter, nm")
-        ax.set_ylabel("Area fraction, %")
 
         if return_fig:
             return fig
         return None
 
     def plot_area_fractions_vs_perimeter(
-        self, nm_per_bin=3, return_fig: bool = False
+        self, nm_per_bin=3.5, return_fig: bool = False
     ) -> Figure | None:
-        fig, ax = plt.subplots()
+        fig = plt.figure()
         perimeters = self._perimeters
         areas = self._areas
+        fractions = areas / areas.sum() * 100
 
-        # Remove outliers
-        max_diameter = np.quantile(perimeters, 0.99)
-        mask = perimeters <= max_diameter
-        perimeters = perimeters[mask]
-        areas = areas[mask]
-
-        # Define bin edges
-        bin_edges = np.arange(0.5, perimeters.max() + 1, nm_per_bin)
-        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
-
-        # Sum areas for each bin
-        area_sums, _ = np.histogram(perimeters, bins=bin_edges, weights=areas)
-        percentage = (area_sums / area_sums.sum()) * 100
-
-        ax.bar(
-            bin_centers,
-            percentage,
-            width=bin_edges[1] - bin_edges[0],
-            color="teal",
-            alpha=0.6,
+        self._plot_distribution(
+            data=perimeters,
+            xlabel="Grain perimeter, nm",
+            ylabel="Area fraction, %",
+            nm_per_bin=nm_per_bin,
+            probability=False,
+            fit=False,
+            weights=fractions,
         )
-        ax.set_xlabel("Grain perimeter, nm")
-        ax.set_ylabel("Area fraction, %")
 
         if return_fig:
             return fig

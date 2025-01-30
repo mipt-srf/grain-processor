@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 
 from .grain_plotter import GrainPlotter
 from .grain_segmenter import WatershedSegmenter
-from .utils import plot_decorator, get_hist_data
+from .utils import get_hist_data, plot_decorator
 
 
 class GrainProcessor:
@@ -202,7 +202,7 @@ class GrainProcessor:
         cv.imwrite(path / "image.png", self._image_grayscale)
         cv.imwrite(
             path / "image_with_markers.png",
-            self.segmenter.marked_image().astype(np.uint8),
+            cv.cvtColor(self.segmenter.marked_image(), cv.COLOR_RGB2BGR),
         )
 
         diameters = self.get_diameters()

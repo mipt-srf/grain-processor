@@ -6,15 +6,15 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "ipywidgets>=8.1.5",
-    "matplotlib>=3.9.2",
-    "opencv-python>=4.10.0.84",
-    "scikit-image>=0.24.0",
+    "matplotlib>=3.10.0",
+    "opencv-python>=4.11.0.86",
+    "scikit-image>=0.25.1",
 ]
 
 [project.optional-dependencies]
 plot = [
-    "ipympl>=0.9.4",
-    "pyqt6>=6.7.1",
+    "ipympl>=0.9.6",
+    "pyqt6>=6.8.0",
 ]
 
 [build-system]
@@ -24,6 +24,6 @@ build-backend = "setuptools.build_meta"
 [tool.uv]
 dev-dependencies = [
     "ipykernel>=6.29.5",
-    "pytest>=8.3.3",
-    "ruff>=0.7.0",
+    "pytest>=8.3.4",
+    "ruff>=0.9.3",
 ]

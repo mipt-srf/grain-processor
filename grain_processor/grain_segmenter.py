@@ -9,8 +9,8 @@ from .utils import plot_decorator
 
 
 class WatershedSegmenter:
-    THRESHOLD_BLOCK_SIZE = 151
-    DISTANCE_TRANSFORM_THRESHOLD = 0.3
+    THRESHOLD_BLOCK_SIZE: int = 151
+    DISTANCE_TRANSFORM_THRESHOLD: float = 0.3
 
     def __init__(self, image: np.ndarray) -> None:
         self.image = image

@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
-def plot_decorator(func: Callable) -> Callable:
+def plot_decorator(func: Callable[..., np.ndarray]) -> Callable[..., np.ndarray]:
     @wraps(func)
     def wrapper(*args, plot: bool = False, **kwargs) -> np.ndarray:
         # call the original function to get the result

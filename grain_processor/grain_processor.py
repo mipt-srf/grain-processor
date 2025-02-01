@@ -131,7 +131,7 @@ class GrainProcessor:
     def adjust_fft_mask(self) -> None:
         import ipywidgets
 
-        def update_image(radius):
+        def update_image(radius: int) -> None:
             self.update_fft_radius(radius, plot_filter=True)
             self.image_grayscale(plot=True)
             plt.title(f"FFT Filtered Image with radius {radius}")

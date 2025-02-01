@@ -30,11 +30,11 @@ class GrainPlotter:
         data: np.ndarray,
         xlabel: str,
         ylabel: str = "Count",
-        nm_per_bin=1,
+        nm_per_bin: float = 1,
         probability: bool = True,
         fit: bool = True,
-        weights=None,
-        quantile=0.995,
+        weights: np.ndarray | None = None,
+        quantile: float = 0.995,
     ) -> None:
         bins, hist = get_hist_data(data=data, nm_per_bin=nm_per_bin, quantile=quantile, weights=weights)
         plt.bar(bins, hist, width=nm_per_bin, color="teal", alpha=0.6)
@@ -51,7 +51,7 @@ class GrainPlotter:
             plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: "{:.0f}".format(y / len(data) * 100)))
             plt.ylabel("Probability, %")
 
-    def plot_area_fractions(self, nm_per_bin=1, return_fig: bool = False) -> Figure | None:
+    def plot_area_fractions(self, nm_per_bin: float = 1, return_fig: bool = False) -> Figure | None:
         fig = plt.figure()
         diameters = self._diameters
         areas = self._areas
@@ -71,7 +71,7 @@ class GrainPlotter:
             return fig
         return None
 
-    def plot_area_fractions_vs_perimeter(self, nm_per_bin=3.5, return_fig: bool = False) -> Figure | None:
+    def plot_area_fractions_vs_perimeter(self, nm_per_bin: float = 3.5, return_fig: bool = False) -> Figure | None:
         fig = plt.figure()
         perimeters = self._perimeters
         areas = self._areas

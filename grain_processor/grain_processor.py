@@ -20,9 +20,7 @@ class GrainProcessor:
         self.image_path = Path(image_path)
         self._image_source = self._read_image(self.image_path)
         self._image_grayscale_source = self._convert_to_grayscale(self._image_source)
-        self.nm_per_pixel = nm_per_pixel or self._get_scale(
-            self.image_path.with_suffix(".txt")
-        )
+        self.nm_per_pixel = nm_per_pixel or self._get_scale(self.image_path.with_suffix(".txt"))
 
         if cut_SEM:
             self._cut_image()
@@ -110,9 +108,7 @@ class GrainProcessor:
 
         if plot:
             magnitude_spectrum = 20 * np.log(np.abs(np.fft.fftshift(f)) + 1)
-            magnitude_spectrum = cv.normalize(
-                magnitude_spectrum, None, 0, 255, cv.NORM_MINMAX
-            )
+            magnitude_spectrum = cv.normalize(magnitude_spectrum, None, 0, 255, cv.NORM_MINMAX)
             mask_circle_rgb = cv.circle(
                 self._convert_to_RGB(magnitude_spectrum.astype(np.uint8)),
                 (ccol, crow),
@@ -130,9 +126,7 @@ class GrainProcessor:
 
     def update_fft_radius(self, radius, plot_filter=False) -> None:
         self._filter_image(radius, plot=plot_filter)
-        self.segmenter = WatershedSegmenter(
-            self._image_grayscale
-        )  # update segmenter with new image
+        self.segmenter = WatershedSegmenter(self._image_grayscale)  # update segmenter with new image
 
     def adjust_fft_mask(self) -> None:
         import ipywidgets
@@ -145,17 +139,13 @@ class GrainProcessor:
         ipywidgets.interact(update_image, radius=(0, 250, 1))
 
     def get_diameters(self, in_nm: bool = True) -> np.ndarray:
-        diameters = np.array(
-            [cluster.feret_diameter_max for cluster in self.segmenter.clusters]
-        )[1:]
+        diameters = np.array([cluster.feret_diameter_max for cluster in self.segmenter.clusters])[1:]
         if in_nm and self.nm_per_pixel is not None:
             diameters *= self.nm_per_pixel
         return diameters
 
     def get_perimeters(self, in_nm: bool = True) -> np.ndarray:
-        perimeters = np.array(
-            [cluster.perimeter for cluster in self.segmenter.clusters]
-        )[1:]
+        perimeters = np.array([cluster.perimeter for cluster in self.segmenter.clusters])[1:]
         if in_nm and self.nm_per_pixel is not None:
             perimeters *= self.nm_per_pixel
         return perimeters
@@ -228,9 +218,7 @@ class GrainProcessor:
             x, pdf = plotter._lognorm_fit(diameters)
             f.write("\n".join(f"{x[i]}, {pdf[i]}" for i in range(len(x))))
 
-        plotter.plot_perimeters(return_fig=True).savefig(
-            path / "perimeters.png", dpi=300
-        )
+        plotter.plot_perimeters(return_fig=True).savefig(path / "perimeters.png", dpi=300)
         with open(path / "perimeters.txt", "w") as f:
             f.write("\n".join(map(str, perimeters)))
 
@@ -249,21 +237,15 @@ class GrainProcessor:
             path / "perimeters_vs_diameters.png", dpi=300
         )
 
-        plotter.plot_area_fractions(return_fig=True).savefig(
-            path / "area_fractions.png", dpi=300
-        )
+        plotter.plot_area_fractions(return_fig=True).savefig(path / "area_fractions.png", dpi=300)
         plotter.plot_area_fractions_vs_perimeter(return_fig=True).savefig(
             path / "area_fractions_vs_perimeter.png", dpi=300
         )
         with open(path / "area_fractions.txt", "w") as f:
             fractions = areas / areas.sum() * 100
-            bins, hist = get_hist_data(
-                data=diameters, nm_per_bin=1, quantile=0.995, weights=fractions
-            )
+            bins, hist = get_hist_data(data=diameters, nm_per_bin=1, quantile=0.995, weights=fractions)
             f.write("\n".join(f"{bins[i]}, {hist[i]}" for i in range(len(bins))))
 
         with open(path / "area_fractions_vs_perimeter.txt", "w") as f:
-            bins, hist = get_hist_data(
-                data=perimeters, nm_per_bin=3.5, quantile=0.995, weights=fractions
-            )
+            bins, hist = get_hist_data(data=perimeters, nm_per_bin=3.5, quantile=0.995, weights=fractions)
             f.write("\n".join(f"{bins[i]}, {hist[i]}" for i in range(len(bins))))

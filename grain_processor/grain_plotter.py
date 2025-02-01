@@ -36,9 +36,7 @@ class GrainPlotter:
         weights=None,
         quantile=0.995,
     ) -> None:
-        bins, hist = get_hist_data(
-            data=data, nm_per_bin=nm_per_bin, quantile=quantile, weights=weights
-        )
+        bins, hist = get_hist_data(data=data, nm_per_bin=nm_per_bin, quantile=quantile, weights=weights)
         plt.bar(bins, hist, width=nm_per_bin, color="teal", alpha=0.6)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
@@ -50,14 +48,10 @@ class GrainPlotter:
             plt.plot(x, pdf_scaled, "r-", linewidth=2, color="lightcoral")
 
         if probability:
-            plt.gca().yaxis.set_major_formatter(
-                plt.FuncFormatter(lambda y, _: "{:.0f}".format(y / len(data) * 100))
-            )
+            plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: "{:.0f}".format(y / len(data) * 100)))
             plt.ylabel("Probability, %")
 
-    def plot_area_fractions(
-        self, nm_per_bin=1, return_fig: bool = False
-    ) -> Figure | None:
+    def plot_area_fractions(self, nm_per_bin=1, return_fig: bool = False) -> Figure | None:
         fig = plt.figure()
         diameters = self._diameters
         areas = self._areas
@@ -77,9 +71,7 @@ class GrainPlotter:
             return fig
         return None
 
-    def plot_area_fractions_vs_perimeter(
-        self, nm_per_bin=3.5, return_fig: bool = False
-    ) -> Figure | None:
+    def plot_area_fractions_vs_perimeter(self, nm_per_bin=3.5, return_fig: bool = False) -> Figure | None:
         fig = plt.figure()
         perimeters = self._perimeters
         areas = self._areas
@@ -99,9 +91,7 @@ class GrainPlotter:
             return fig
         return None
 
-    def plot_diameters(
-        self, fit: bool = True, probability: bool = True, return_fig: bool = False
-    ) -> Figure | None:
+    def plot_diameters(self, fit: bool = True, probability: bool = True, return_fig: bool = False) -> Figure | None:
         fig = plt.figure()
         diameters = self._diameters
 
@@ -111,16 +101,12 @@ class GrainPlotter:
         else:
             label += "px"
 
-        self._plot_distribution(
-            data=diameters, xlabel=label, probability=probability, fit=fit
-        )
+        self._plot_distribution(data=diameters, xlabel=label, probability=probability, fit=fit)
         if return_fig:
             return fig
         return None
 
-    def plot_perimeters(
-        self, fit: bool = True, probability: bool = True, return_fig: bool = False
-    ) -> Figure | None:
+    def plot_perimeters(self, fit: bool = True, probability: bool = True, return_fig: bool = False) -> Figure | None:
         fig = plt.figure()
         perimeters = self._perimeters
 
@@ -141,9 +127,7 @@ class GrainPlotter:
             return fig
         return None
 
-    def plot_areas(
-        self, fit: bool = False, probability: bool = True, return_fig: bool = False
-    ) -> Figure | None:
+    def plot_areas(self, fit: bool = False, probability: bool = True, return_fig: bool = False) -> Figure | None:
         fig = plt.figure()
 
         label = r"Grain area, "
@@ -154,16 +138,12 @@ class GrainPlotter:
             areas = self._areas
             label += "px$^2$"
 
-        self._plot_distribution(
-            data=areas, xlabel=label, probability=probability, fit=fit, nm_per_bin=7.5
-        )
+        self._plot_distribution(data=areas, xlabel=label, probability=probability, fit=fit, nm_per_bin=7.5)
         if return_fig:
             return fig
         return None
 
-    def plot_perimeters_vs_diameters(
-        self, return_fig: bool = False, fit: bool = False
-    ) -> Figure | None:
+    def plot_perimeters_vs_diameters(self, return_fig: bool = False, fit: bool = False) -> Figure | None:
         fig = plt.figure()
         diameters = self._diameters
         perimeters = self._perimeters

@@ -37,9 +37,7 @@ class WatershedSegmenter:
         kernel = np.ones((3, 3), np.uint8)
 
         # apply erosion + dilation 2 times
-        opening = cv.morphologyEx(
-            self.threshold(), op=cv.MORPH_OPEN, kernel=kernel, iterations=2
-        )
+        opening = cv.morphologyEx(self.threshold(), op=cv.MORPH_OPEN, kernel=kernel, iterations=2)
 
         return opening
 
@@ -51,9 +49,7 @@ class WatershedSegmenter:
 
     @plot_decorator
     def foreground(self) -> np.ndarray:
-        dist_transform = cv.distanceTransform(
-            self.opening(), distanceType=cv.DIST_L2, maskSize=3
-        )
+        dist_transform = cv.distanceTransform(self.opening(), distanceType=cv.DIST_L2, maskSize=3)
         ret, sure_fg = cv.threshold(
             dist_transform,
             thresh=self.DISTANCE_TRANSFORM_THRESHOLD * dist_transform.max(),

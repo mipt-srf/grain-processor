@@ -21,6 +21,9 @@ plot = [
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.ruff]
+line-length = 120
+
 [tool.uv]
 dev-dependencies = [
     "ipykernel>=6.29.5",

@@ -23,9 +23,7 @@ def plot_decorator(func: Callable) -> Callable:
     return wrapper
 
 
-def get_hist_data(
-    data: np.ndarray, nm_per_bin: float, quantile=0.995, weights=None
-) -> tuple[np.ndarray, np.ndarray]:
+def get_hist_data(data: np.ndarray, nm_per_bin: float, quantile=0.995, weights=None) -> tuple[np.ndarray, np.ndarray]:
     max_data = np.quantile(data, quantile)
     bins = np.arange(0.5, max_data + 1, nm_per_bin)
     hist, bins = np.histogram(data, bins=bins, weights=weights)

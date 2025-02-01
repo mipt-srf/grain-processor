@@ -45,7 +45,7 @@ class GrainPlotter:
             x, pdf = self._lognorm_fit(data)
             bin_width = nm_per_bin
             pdf_scaled = pdf * len(data) * bin_width
-            plt.plot(x, pdf_scaled, "r-", linewidth=2, color="lightcoral")
+            plt.plot(x, pdf_scaled, "-", linewidth=2, color="lightcoral")
 
         if probability:
             plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: "{:.0f}".format(y / len(data) * 100)))

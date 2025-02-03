@@ -108,7 +108,7 @@ class GrainProcessor:
 
         if plot:
             magnitude_spectrum = 20 * np.log(np.abs(np.fft.fftshift(f)) + 1)
-            magnitude_spectrum = cv.normalize(magnitude_spectrum, None, 0, 255, cv.NORM_MINMAX)
+            magnitude_spectrum = cv.normalize(magnitude_spectrum, magnitude_spectrum, 0, 255, cv.NORM_MINMAX)
             mask_circle_rgb = cv.circle(
                 self._convert_to_RGB(magnitude_spectrum.astype(np.uint8)),
                 (ccol, crow),
@@ -163,25 +163,25 @@ class GrainProcessor:
 
         return {
             "diameters": {
-                "mean": np.mean(diameters),
-                "std": np.std(diameters),
-                "min": np.min(diameters),
-                "max": np.max(diameters),
-                "sum": np.sum(diameters),
+                "mean": np.mean(diameters).item(),
+                "std": np.std(diameters).item(),
+                "min": np.min(diameters).item(),
+                "max": np.max(diameters).item(),
+                "sum": np.sum(diameters).item(),
             },
             "perimeters": {
-                "mean": np.mean(perimeters),
-                "std": np.std(perimeters),
-                "min": np.min(perimeters),
-                "max": np.max(perimeters),
-                "sum": np.sum(perimeters),
+                "mean": np.mean(perimeters).item(),
+                "std": np.std(perimeters).item(),
+                "min": np.min(perimeters).item(),
+                "max": np.max(perimeters).item(),
+                "sum": np.sum(perimeters).item(),
             },
             "areas": {
-                "mean": np.mean(areas),
-                "std": np.std(areas),
-                "min": np.min(areas),
-                "max": np.max(areas),
-                "sum": np.sum(areas),
+                "mean": np.mean(areas).item(),
+                "std": np.std(areas).item(),
+                "min": np.min(areas).item(),
+                "max": np.max(areas).item(),
+                "sum": np.sum(areas).item(),
             },
         }
 
@@ -189,9 +189,9 @@ class GrainProcessor:
         path = Path(path)
         path.mkdir(exist_ok=True, parents=True)
 
-        cv.imwrite(path / "image.png", self._image_grayscale)
+        cv.imwrite(str(path / "image.png"), self._image_grayscale)
         cv.imwrite(
-            path / "image_with_markers.png",
+            str(path / "image_with_markers.png"),
             cv.cvtColor(self.segmenter.marked_image(), cv.COLOR_RGB2BGR),
         )
 

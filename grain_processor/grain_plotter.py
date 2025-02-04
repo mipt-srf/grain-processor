@@ -1,3 +1,5 @@
+"""Module for plotting grain measurement distributions and relationships."""
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
@@ -8,6 +10,10 @@ from .utils import get_hist_data
 
 
 class GrainPlotter:
+    """
+    A utility class to generate plots for grain diameters, perimeters, and areas.
+    """
+
     def __init__(
         self,
         diameters: NDArray[np.float64],
@@ -15,12 +21,26 @@ class GrainPlotter:
         areas: NDArray[np.float64],
         nm_per_pixel: float | None = None,
     ) -> None:
+        """
+        Initialize the GrainPlotter with grain measurements.
+
+        :param diameters: Array of grain diameters.
+        :param perimeters: Array of grain perimeters.
+        :param areas: Array of grain areas.
+        :param nm_per_pixel: Optional scale factor for unit conversion.
+        """
         self._diameters = diameters
         self._perimeters = perimeters
         self._areas = areas
         self._nm_per_pixel = nm_per_pixel
 
     def _lognorm_fit(self, data: NDArray[np.float64]) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+        """
+        Fit a log-normal distribution to the data and compute its PDF.
+
+        :param data: Array of measurement data.
+        :return: A tuple with evaluation points and corresponding PDF values.
+        """
         data = data[data > 0]
         shape, loc, scale = lognorm.fit(data, floc=0)
         x = np.linspace(0, np.quantile(data, 0.99), 100, dtype=np.float64)
@@ -38,6 +58,18 @@ class GrainPlotter:
         weights: NDArray[np.float64] | None = None,
         quantile: float = 0.995,
     ) -> None:
+        """
+        Plot a histogram of the provided data and optionally overlay a log-normal fit.
+
+        :param data: Array of measurement data.
+        :param xlabel: Label for the x-axis.
+        :param ylabel: Label for the y-axis.
+        :param nm_per_bin: Bin width for the histogram.
+        :param probability: Whether to display the y-axis as a percentage.
+        :param fit: Whether to overlay a log-normal fit.
+        :param weights: Optional weights for the histogram.
+        :param quantile: Quantile to determine the histogram range.
+        """
         bins, hist = get_hist_data(data=data, nm_per_bin=nm_per_bin, quantile=quantile, weights=weights)
         plt.bar(bins, hist, width=nm_per_bin, color="teal", alpha=0.6)
         plt.xlabel(xlabel)
@@ -54,6 +86,12 @@ class GrainPlotter:
             plt.ylabel("Probability, %")
 
     def plot_area_fractions(self, nm_per_bin: float = 1, return_fig: bool = False) -> Figure | None:
+        """
+        Plot the area fraction distribution based on grain diameters.
+
+        :param nm_per_bin: Bin width for the histogram.
+        :param return_fig: Whether to return the figure object.
+        """
         fig = plt.figure()
         diameters = self._diameters
         areas = self._areas
@@ -74,6 +112,12 @@ class GrainPlotter:
         return None
 
     def plot_area_fractions_vs_perimeter(self, nm_per_bin: float = 3.5, return_fig: bool = False) -> Figure | None:
+        """
+        Plot the area fraction distribution with respect to grain perimeter.
+
+        :param nm_per_bin: Bin width for the histogram.
+        :param return_fig: Whether to return the figure object.
+        """
         fig = plt.figure()
         perimeters = self._perimeters
         areas = self._areas
@@ -94,6 +138,13 @@ class GrainPlotter:
         return None
 
     def plot_diameters(self, fit: bool = True, probability: bool = True, return_fig: bool = False) -> Figure | None:
+        """
+        Plot the distribution of grain diameters.
+
+        :param fit: Whether to overlay a log-normal fit.
+        :param probability: Whether to display the histogram as a probability.
+        :param return_fig: Whether to return the figure object.
+        """
         fig = plt.figure()
         diameters = self._diameters
 
@@ -109,6 +160,13 @@ class GrainPlotter:
         return None
 
     def plot_perimeters(self, fit: bool = True, probability: bool = True, return_fig: bool = False) -> Figure | None:
+        """
+        Plot the distribution of grain perimeters.
+
+        :param fit: Whether to overlay a log-normal fit.
+        :param probability: Whether to display the histogram as a probability.
+        :param return_fig: Whether to return the figure object.
+        """
         fig = plt.figure()
         perimeters = self._perimeters
 
@@ -130,6 +188,13 @@ class GrainPlotter:
         return None
 
     def plot_areas(self, fit: bool = False, probability: bool = True, return_fig: bool = False) -> Figure | None:
+        """
+        Plot the distribution of grain areas.
+
+        :param fit: Whether to overlay a log-normal fit.
+        :param probability: Whether to display the histogram as a probability.
+        :param return_fig: Whether to return the figure object.
+        """
         fig = plt.figure()
 
         label = r"Grain area, "
@@ -146,6 +211,12 @@ class GrainPlotter:
         return None
 
     def plot_perimeters_vs_diameters(self, return_fig: bool = False, fit: bool = False) -> Figure | None:
+        """
+        Create a scatter plot to compare grain perimeters and diameters, with an optional linear fit.
+
+        :param return_fig: Whether to return the figure object.
+        :param fit: Whether to overlay a linear fit.
+        """
         fig = plt.figure()
         diameters = self._diameters
         perimeters = self._perimeters

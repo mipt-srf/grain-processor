@@ -1,3 +1,7 @@
+"""Module providing functionality for processing and analyzing grain images using FFT filtering,
+watershed segmentation, and statistical analysis.
+"""
+
 from pathlib import Path
 
 import cv2 as cv
@@ -12,6 +16,13 @@ from .utils import get_hist_data, plot_decorator
 
 
 class GrainProcessor:
+    """
+    Processes grain images by performing FFT filtering, segmentation, and analysis.
+
+    This class reads an image, applies optional preprocessing, segments grains using the watershed algorithm,
+    computes measurement statistics, and saves results.
+    """
+
     def __init__(
         self,
         image_path: Path | str,
@@ -19,6 +30,14 @@ class GrainProcessor:
         fft_filter: bool = False,
         nm_per_pixel: float | None = None,
     ) -> None:
+        """
+        Initialize the GrainProcessor.
+
+        :param image_path: Path to the input image.
+        :param cut_SEM: Whether to perform image cutting (for SEM images).
+        :param fft_filter: Whether to apply FFT filtering.
+        :param nm_per_pixel: Scale of image in nanometers per pixel.
+        """
         self.image_path = Path(image_path)
         self._image_source = self._read_image(self.image_path)
         self._image_grayscale_source = self._convert_to_grayscale(self._image_source)
@@ -37,6 +56,12 @@ class GrainProcessor:
         self.segmenter = WatershedSegmenter(self._image_grayscale)
 
     def _get_scale(self, txt_path: Path | str) -> float | None:
+        """
+        Get image scale (nm per pixel) from a text file.
+
+        :param txt_path: Path to the scale information file.
+        :return: Computed scale or None if file not found.
+        """
         try:
             with open(txt_path, "r", errors="ignore") as txt_file:
                 for line in txt_file:
@@ -61,11 +86,21 @@ class GrainProcessor:
 
     @plot_decorator
     def image(self) -> MatLike:
+        """
+        Return the current RGB image.
+
+        :return: The RGB image.
+        """
         self._update_RGB_image()
         return self._image
 
     @plot_decorator
     def image_grayscale(self) -> MatLike:
+        """
+        Return the current grayscale image.
+
+        :return: The grayscale image.
+        """
         return self._image_grayscale
 
     def _read_image(self, path: Path | str) -> MatLike:
@@ -127,10 +162,19 @@ class GrainProcessor:
         self._image_grayscale = img_back.astype(np.uint8)
 
     def update_fft_radius(self, radius, plot_filter=False) -> None:
+        """
+        Update the FFT filter radius and refresh segmentation.
+
+        :param radius: New FFT filter radius.
+        :param plot_filter: Whether to display the FFT of the image with applied filter.
+        """
         self._filter_image(radius, plot=plot_filter)
         self.segmenter = WatershedSegmenter(self._image_grayscale)  # update segmenter with new image
 
     def adjust_fft_mask(self) -> None:
+        """
+        Launch an interactive widget to adjust the FFT filter mask radius.
+        """
         import ipywidgets
 
         def update_image(radius: int) -> None:
@@ -141,18 +185,36 @@ class GrainProcessor:
         ipywidgets.interact(update_image, radius=(0, 250, 1))
 
     def get_diameters(self, in_nm: bool = True) -> NDArray[np.float64]:
+        """
+        Return the grain diameters.
+
+        :param in_nm: Return values in nanometers if True, else in pixels.
+        :return: Array of grain diameters.
+        """
         diameters = np.array([cluster.feret_diameter_max for cluster in self.segmenter.clusters], dtype=np.float64)[1:]
         if in_nm and self.nm_per_pixel is not None:
             diameters *= self.nm_per_pixel
         return diameters
 
     def get_perimeters(self, in_nm: bool = True) -> NDArray[np.float64]:
+        """
+        Return the grain perimeters.
+
+        :param in_nm: Return values in nanometers if True, else in pixels.
+        :return: Array of grain perimeters.
+        """
         perimeters = np.array([cluster.perimeter for cluster in self.segmenter.clusters], dtype=np.float64)[1:]
         if in_nm and self.nm_per_pixel is not None:
             perimeters *= self.nm_per_pixel
         return perimeters
 
     def get_areas(self, in_nm: bool = True) -> NDArray[np.float64]:
+        """
+        Return the grain areas.
+
+        :param in_nm: Return values in nanometers squared if True, else in pixels squared.
+        :return: Array of grain areas.
+        """
         areas = np.array([cluster.area for cluster in self.segmenter.clusters], dtype=np.float64)[1:]
         if in_nm and self.nm_per_pixel is not None:
             areas *= (self.nm_per_pixel) ** 2
@@ -168,6 +230,12 @@ class GrainProcessor:
         }
 
     def get_stats(self, in_nm: bool = True) -> dict[str, dict[str, float]]:
+        """
+        Return statistical summaries (mean, std, min, max, sum) for diameters, perimeters, and areas.
+
+        :param in_nm: Use nanometer units if True.
+        :return: Dictionary of statistics per characteristic.
+        """
         return {
             "diameters": self._compute_stats(self.get_diameters(in_nm)),
             "perimeters": self._compute_stats(self.get_perimeters(in_nm)),
@@ -175,6 +243,11 @@ class GrainProcessor:
         }
 
     def save_results(self, path: Path | str = "results") -> None:
+        """
+        Save the processed images, statistics, and plots into the specified directory.
+
+        :param path: Destination directory.
+        """
         path = Path(path)
         path.mkdir(exist_ok=True, parents=True)
 
@@ -237,4 +310,5 @@ class GrainProcessor:
 
         with open(path / "area_fractions_vs_perimeter.txt", "w") as f:
             bins, hist = get_hist_data(data=perimeters, nm_per_bin=3.5, quantile=0.995, weights=fractions)
+            f.write("\n".join(f"{bins[i]}, {hist[i]}" for i in range(len(bins))))
             f.write("\n".join(f"{bins[i]}, {hist[i]}" for i in range(len(bins))))

@@ -1,3 +1,7 @@
+"""
+Utility functions for grain image processing.
+"""
+
 from functools import wraps
 from typing import Callable
 
@@ -8,6 +12,13 @@ from numpy.typing import NDArray
 
 
 def plot_decorator(func: Callable[..., MatLike]) -> Callable[..., MatLike]:
+    """
+    Decorator to optionally plot the image returned by a function.
+
+    :param func: The function returning an image.
+    :return: The wrapped function that displays the image if 'plot' is True.
+    """
+
     @wraps(func)
     def wrapper(*args, plot: bool = False, **kwargs) -> MatLike:
         # call the original function to get the result
@@ -28,6 +39,15 @@ def plot_decorator(func: Callable[..., MatLike]) -> Callable[..., MatLike]:
 def get_hist_data(
     data: np.ndarray, nm_per_bin: float, quantile=0.995, weights=None
 ) -> tuple[NDArray[np.float64], NDArray]:
+    """
+    Compute histogram data for a given array of values.
+
+    :param data: The array of measurement data.
+    :param nm_per_bin: The width of each histogram bin.
+    :param quantile: The quantile used to determine the histogram range.
+    :param weights: Optional weights for the histogram computation.
+    :return: A tuple with bin edges (excluding the last edge) and histogram counts.
+    """
     max_data = np.quantile(data, quantile)
     bins = np.arange(0.5, max_data + 1, nm_per_bin, dtype=np.float64)
     hist, bins = np.histogram(data, bins=bins, weights=weights)

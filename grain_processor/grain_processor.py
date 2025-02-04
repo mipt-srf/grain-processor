@@ -158,33 +158,20 @@ class GrainProcessor:
             areas *= (self.nm_per_pixel) ** 2
         return areas
 
-    def get_stats(self, in_nm: bool = True) -> dict[str, dict[str, float]]:
-        diameters = self.get_diameters(in_nm)
-        perimeters = self.get_perimeters(in_nm)
-        areas = self.get_areas(in_nm)
-
+    def _compute_stats(self, values: NDArray[np.float64]) -> dict[str, float]:
         return {
-            "diameters": {
-                "mean": np.mean(diameters).item(),
-                "std": np.std(diameters).item(),
-                "min": np.min(diameters).item(),
-                "max": np.max(diameters).item(),
-                "sum": np.sum(diameters).item(),
-            },
-            "perimeters": {
-                "mean": np.mean(perimeters).item(),
-                "std": np.std(perimeters).item(),
-                "min": np.min(perimeters).item(),
-                "max": np.max(perimeters).item(),
-                "sum": np.sum(perimeters).item(),
-            },
-            "areas": {
-                "mean": np.mean(areas).item(),
-                "std": np.std(areas).item(),
-                "min": np.min(areas).item(),
-                "max": np.max(areas).item(),
-                "sum": np.sum(areas).item(),
-            },
+            "mean": np.mean(values).item(),
+            "std": np.std(values).item(),
+            "min": np.min(values).item(),
+            "max": np.max(values).item(),
+            "sum": np.sum(values).item(),
+        }
+
+    def get_stats(self, in_nm: bool = True) -> dict[str, dict[str, float]]:
+        return {
+            "diameters": self._compute_stats(self.get_diameters(in_nm)),
+            "perimeters": self._compute_stats(self.get_perimeters(in_nm)),
+            "areas": self._compute_stats(self.get_areas(in_nm)),
         }
 
     def save_results(self, path: Path | str = "results") -> None:

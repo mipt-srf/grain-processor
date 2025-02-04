@@ -4,6 +4,7 @@ import cv2 as cv
 import numpy as np
 import skimage.measure
 import skimage.measure._regionprops
+from cv2.typing import MatLike
 
 from .utils import plot_decorator
 
@@ -12,11 +13,11 @@ class WatershedSegmenter:
     THRESHOLD_BLOCK_SIZE: int = 151
     DISTANCE_TRANSFORM_THRESHOLD: float = 0.3
 
-    def __init__(self, image: np.ndarray) -> None:
+    def __init__(self, image: MatLike) -> None:
         self.image = image
 
     @plot_decorator
-    def threshold(self) -> np.ndarray:
+    def threshold(self) -> MatLike:
         # blur to remove gaussian noise
         gray = cv.GaussianBlur(self.image, (5, 5), cv.BORDER_DEFAULT)
 
@@ -33,7 +34,7 @@ class WatershedSegmenter:
         return thresh
 
     @plot_decorator
-    def opening(self) -> np.ndarray:
+    def opening(self) -> MatLike:
         kernel = np.ones((3, 3), np.uint8)
 
         # apply erosion + dilation 2 times
@@ -42,13 +43,13 @@ class WatershedSegmenter:
         return opening
 
     @plot_decorator
-    def background(self) -> np.ndarray:
+    def background(self) -> MatLike:
         kernel = np.ones((3, 3), np.uint8)
         sure_bg = cv.dilate(self.opening(), kernel, iterations=2)
         return sure_bg
 
     @plot_decorator
-    def foreground(self) -> np.ndarray:
+    def foreground(self) -> MatLike:
         dist_transform = cv.distanceTransform(self.opening(), distanceType=cv.DIST_L2, maskSize=3)
         ret, sure_fg = cv.threshold(
             dist_transform,
@@ -59,11 +60,11 @@ class WatershedSegmenter:
         return sure_fg.astype(np.uint8)
 
     @plot_decorator
-    def unknown_region(self) -> np.ndarray:
+    def unknown_region(self) -> MatLike:
         return cv.subtract(self.background(), self.foreground())
 
     @plot_decorator
-    def markers(self) -> np.ndarray:
+    def markers(self) -> MatLike:
         blob_number, markers = cv.connectedComponents(self.foreground())
         markers = markers + 1
         markers[self.unknown_region() == 255] = 0
@@ -74,7 +75,7 @@ class WatershedSegmenter:
         return markers
 
     @plot_decorator
-    def marked_image(self) -> np.ndarray:
+    def marked_image(self) -> MatLike:
         markers = self.markers()
         kernel = np.ones((3, 3), np.uint8)
 

@@ -1,16 +1,18 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
+from numpy.typing import NDArray
 from scipy.stats import lognorm
+
 from .utils import get_hist_data
 
 
 class GrainPlotter:
     def __init__(
         self,
-        diameters: np.ndarray,
-        perimeters: np.ndarray,
-        areas: np.ndarray,
+        diameters: NDArray[np.float64],
+        perimeters: NDArray[np.float64],
+        areas: NDArray[np.float64],
         nm_per_pixel: float | None = None,
     ) -> None:
         self._diameters = diameters
@@ -18,22 +20,22 @@ class GrainPlotter:
         self._areas = areas
         self._nm_per_pixel = nm_per_pixel
 
-    def _lognorm_fit(self, data: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def _lognorm_fit(self, data: NDArray[np.float64]) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         data = data[data > 0]
         shape, loc, scale = lognorm.fit(data, floc=0)
-        x = np.linspace(0, np.quantile(data, 0.99), 100)
+        x = np.linspace(0, np.quantile(data, 0.99), 100, dtype=np.float64)
         pdf = lognorm.pdf(x, shape, loc, scale)
         return x, pdf
 
     def _plot_distribution(
         self,
-        data: np.ndarray,
+        data: NDArray[np.float64],
         xlabel: str,
         ylabel: str = "Count",
         nm_per_bin: float = 1,
         probability: bool = True,
         fit: bool = True,
-        weights: np.ndarray | None = None,
+        weights: NDArray[np.float64] | None = None,
         quantile: float = 0.995,
     ) -> None:
         bins, hist = get_hist_data(data=data, nm_per_bin=nm_per_bin, quantile=quantile, weights=weights)

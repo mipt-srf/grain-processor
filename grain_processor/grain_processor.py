@@ -2,7 +2,9 @@ from pathlib import Path
 
 import cv2 as cv
 import numpy as np
+from cv2.typing import MatLike
 from matplotlib import pyplot as plt
+from numpy.typing import NDArray
 
 from .grain_plotter import GrainPlotter
 from .grain_segmenter import WatershedSegmenter
@@ -58,24 +60,24 @@ class GrainProcessor:
         return nm_per_pixel
 
     @plot_decorator
-    def image(self) -> np.ndarray:
+    def image(self) -> MatLike:
         self._update_RGB_image()
         return self._image
 
     @plot_decorator
-    def image_grayscale(self) -> np.ndarray:
+    def image_grayscale(self) -> MatLike:
         return self._image_grayscale
 
-    def _read_image(self, path: Path | str) -> np.ndarray:
+    def _read_image(self, path: Path | str) -> MatLike:
         image = cv.imread(str(path))
         if image is None:
             raise FileNotFoundError(f"Image not found: {path}")
         return image
 
-    def _convert_to_grayscale(self, image: np.ndarray) -> np.ndarray:
+    def _convert_to_grayscale(self, image: MatLike) -> MatLike:
         return cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
-    def _convert_to_RGB(self, image: np.ndarray) -> np.ndarray:
+    def _convert_to_RGB(self, image: MatLike) -> MatLike:
         return cv.cvtColor(image, cv.COLOR_GRAY2RGB)
 
     def _update_RGB_image(self) -> None:
@@ -138,20 +140,20 @@ class GrainProcessor:
 
         ipywidgets.interact(update_image, radius=(0, 250, 1))
 
-    def get_diameters(self, in_nm: bool = True) -> np.ndarray:
-        diameters = np.array([cluster.feret_diameter_max for cluster in self.segmenter.clusters])[1:]
+    def get_diameters(self, in_nm: bool = True) -> NDArray[np.float64]:
+        diameters = np.array([cluster.feret_diameter_max for cluster in self.segmenter.clusters], dtype=np.float64)[1:]
         if in_nm and self.nm_per_pixel is not None:
             diameters *= self.nm_per_pixel
         return diameters
 
-    def get_perimeters(self, in_nm: bool = True) -> np.ndarray:
-        perimeters = np.array([cluster.perimeter for cluster in self.segmenter.clusters])[1:]
+    def get_perimeters(self, in_nm: bool = True) -> NDArray[np.float64]:
+        perimeters = np.array([cluster.perimeter for cluster in self.segmenter.clusters], dtype=np.float64)[1:]
         if in_nm and self.nm_per_pixel is not None:
             perimeters *= self.nm_per_pixel
         return perimeters
 
-    def get_areas(self, in_nm: bool = True) -> np.ndarray:
-        areas = np.array([cluster.area for cluster in self.segmenter.clusters])[1:]
+    def get_areas(self, in_nm: bool = True) -> NDArray[np.float64]:
+        areas = np.array([cluster.area for cluster in self.segmenter.clusters], dtype=np.float64)[1:]
         if in_nm and self.nm_per_pixel is not None:
             areas *= (self.nm_per_pixel) ** 2
         return areas

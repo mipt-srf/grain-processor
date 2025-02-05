@@ -3,7 +3,7 @@ Utility functions for grain image processing.
 """
 
 from functools import wraps
-from typing import Callable
+from typing import Any, Callable
 
 import numpy as np
 from cv2.typing import MatLike
@@ -20,7 +20,7 @@ def plot_decorator(func: Callable[..., MatLike]) -> Callable[..., MatLike]:
     """
 
     @wraps(func)
-    def wrapper(*args, plot: bool = False, **kwargs) -> MatLike:
+    def wrapper(*args: Any, plot: bool = False, **kwargs: Any) -> MatLike:
         # call the original function to get the result
         result = func(*args, **kwargs)
 
@@ -37,7 +37,7 @@ def plot_decorator(func: Callable[..., MatLike]) -> Callable[..., MatLike]:
 
 
 def get_hist_data(
-    data: np.ndarray, nm_per_bin: float, quantile=0.995, weights=None
+    data: NDArray[np.float64], nm_per_bin: float, quantile: float = 0.995, weights: NDArray[np.float64] | None = None
 ) -> tuple[NDArray[np.float64], NDArray]:
     """
     Compute histogram data for a given array of values.

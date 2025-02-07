@@ -1,10 +1,9 @@
 import datetime
-import importlib.metadata
 
 project = "Grain Analysis"
 author = "Sergey Ilyev"
 copyright = f"{datetime.datetime.now().year}, {author}"
-release = importlib.metadata.version("grain_processor")
+release = "0.4"
 rst_prolog = f"""
 .. |name| replace:: {project}
 """

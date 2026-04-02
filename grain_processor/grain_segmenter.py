@@ -20,6 +20,7 @@ class WatershedSegmenter:
 
     THRESHOLD_BLOCK_SIZE: int = 151
     DISTANCE_TRANSFORM_THRESHOLD: float = 0.3
+    NEGATIVE = False
 
     def __init__(self, image: MatLike) -> None:
         """
@@ -40,6 +41,7 @@ class WatershedSegmenter:
         gray = cv.GaussianBlur(self.image, (5, 5), cv.BORDER_DEFAULT)
 
         # use adaptive thresholding to consider possible variations in brightness across the image
+        # detect bright peaks
         thresh = cv.adaptiveThreshold(
             gray,
             maxValue=255,
@@ -48,6 +50,18 @@ class WatershedSegmenter:
             blockSize=self.THRESHOLD_BLOCK_SIZE,
             C=0,
         )
+
+        if self.NEGATIVE:
+            # detect darker drops
+            thresh = cv.adaptiveThreshold(
+                gray,
+                maxValue=255,
+                adaptiveMethod=cv.ADAPTIVE_THRESH_GAUSSIAN_C,
+                thresholdType=cv.THRESH_BINARY_INV,
+                blockSize=self.THRESHOLD_BLOCK_SIZE,
+                C=0,
+            )
+        # combine both masks to segment both peaks and drops
 
         return thresh
 

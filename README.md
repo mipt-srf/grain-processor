@@ -2,9 +2,7 @@
 
 ## Quickstart
 
-```bash
-pip install git+https://github.com/mipt-srf/grain-processor
-```
+`pip install grain-processor`
 
 ```python
 import GrainProcessor as px
@@ -16,7 +14,15 @@ GP = GrainProcessor(
 GP.save_results()
 ```
 
+See the [jupyter notebook]() and [documentation]() for more examples.
+
 ## Installation
+
+<!-- Using latest release on PyPI
+
+```bash
+pip install grain-processor
+``` -->
 
 Using latest version from Github
 
@@ -30,6 +36,12 @@ Clone the repository
 
 ```bash
 git clone https://github.com/mipt-srf/grain-processor
+```
+
+Install package locally
+
+```bash
+pip install -e /path/to/sphinx_copybutton
 ```
 
 Open repository folder
@@ -67,3 +79,17 @@ Install dependencies
     ```bash
     uv sync
     ```
+
+<!-- Run a script
+
+- Using pip
+
+    ```bash
+    python grain_processor/process_all.py
+    ```
+
+- Using uv
+
+    ```bash
+    uv run grain_processor/process_all.py
+    ``` -->

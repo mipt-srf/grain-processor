@@ -29,7 +29,7 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable/", None),
 }
 
-copybutton_exclude = ".linenos, .gp"
+copybutton_exclude = ".linenos, .gp"  # to exclude prompts ($, >>>, etc.) from copied code
 copybutton_prompt_text = " "  # to remove space in (.venv) $
 
 typehints_use_rtype = False
